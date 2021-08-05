@@ -6,16 +6,19 @@ volumes:
     driver_opts:
         type: volume
         device: ${OWNCLOUD_DATA_PATH}/files
+        o: bind
   mysql:
     driver: local
     driver_opts:
         type: volume
         device: ${OWNCLOUD_DATA_PATH}/mysql
+        o: bind
   redis:
     driver: local
     driver_opts:
         type: volume
         device: ${OWNCLOUD_DATA_PATH}/redis
+        o: bind
 
 services:
   owncloud:
