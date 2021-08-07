@@ -1,0 +1,24 @@
+[api]
+# insecure=true
+
+#[log]
+#  level = "DEBUG"
+
+[providers.docker]
+  [entryPoints.web]
+  address = ":80"
+    [entryPoints.web.http.redirections.entryPoint]
+    to = "websecure"
+    scheme = "https"
+
+    [entryPoints.websecure]
+    address = ":443"
+    [entryPoints.websecure.http.tls]
+    certResolver = "le"
+
+  [certificatesResolvers.le.acme]
+  email = "<traefik-email>"
+  storage = "/acme.json"
+# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"    
+    [certificatesResolvers.le.acme.httpChallenge]
+    entryPoint = "web"

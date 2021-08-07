@@ -21,19 +21,63 @@ volumes:
         o: bind
 
 services:
+  cloudflare:
+    build:
+      context: ./cloudflare-dns
+      dockerfile: Dockerfile
+      args:
+        cloudflare_email: ${CLOUDFLARE_EMAIL}
+        cloudflare_key: ${CLOUDFLARE_KEY}
+        cloudflare_domain: ${CLOUDFLARE_DOMAIN}
+        cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAIN}
+    container_name: cloudflare_dyndns
+    restart: always
+    labels:
+      - "traefik.enable=false"
+
+  reverse-proxy:
+    # The official v2 Traefik docker image
+    build:
+      context: ./traefik
+      dockerfile: Dockerfile
+      args:
+        traefik_email: ${TRAEFIK_EMAIL}
+    # Enables the web UI and tells Traefik to listen to docker
+    command:
+      #- "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    restart: always
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The HTTPS port
+      - "443:443"
+      # The Web UI (enabled by --api.insecure=true)
+      #- "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/acme.json:/acme.json
+    labels:
+      - "traefik.enable=false"
+
   owncloud:
     build:
-      context: .
+      context: ./owncloud
       dockerfile: Dockerfile
       args:
         owncloud_version: ${OWNCLOUD_VERSION}
     container_name: owncloud_server
     restart: always
-    ports:
-      - ${HTTP_PORT}:8080
+    #ports:
+    #  - ${HTTP_PORT}:8080
     depends_on:
       - mariadb
       - redis
+      - reverse-proxy
+      - cloudflare
     environment:
       - OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}
       - OWNCLOUD_DB_TYPE=mysql
@@ -46,6 +90,13 @@ services:
       - OWNCLOUD_MYSQL_UTF8MB4=true
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
+    labels:
+      - "traefik.http.routers.owncloud.rule=${OWNCLOUD_CERTIFICATE_DOMAIN}"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.owncloud.entrypoints=websecure"
+      - "traefik.http.routers.owncloud.tls=true"
+      - "traefik.http.routers.owncloud.tls.certresolver=le"
+      - "traefik.enable=true"
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s
@@ -71,6 +122,8 @@ services:
       retries: 5
     volumes:
       - mysql:/var/lib/mysql
+    labels:
+      - "traefik.enable=false"
 
   redis:
     image: redis:6
@@ -84,3 +137,5 @@ services:
       retries: 5
     volumes:
       - redis:/data
+    labels:
+      - "traefik.enable=false"
