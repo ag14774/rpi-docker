@@ -19,6 +19,12 @@ volumes:
         type: volume
         device: ${OWNCLOUD_DATA_PATH}/redis
         o: bind
+  backup:
+    driver: local
+    driver_opts:
+      type: volume
+      device: ${LOCAL_BACKUP_PATH}
+      o: bind
 
 services:
   cloudflare:
@@ -104,6 +110,7 @@ services:
       retries: 5
     volumes:
       - files:/mnt/data
+      - backup:/mnt/backup
 
   mariadb:
     image: mariadb:10.5
@@ -139,3 +146,19 @@ services:
       - redis:/data
     labels:
       - "traefik.enable=false"
+
+  duplicity:
+    build:
+      context: ./duplicity
+      dockerfile: Dockerfile
+      args:
+        client_id: ${GDRIVE_CLIENT_ID}
+        client_secret: ${GDRIVE_CLIENT_SECRET}
+        duplicity_password: ${DUPLICITY_PASSWORD}
+        duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
+    container_name: duplicity_gdrive_sync
+    restart: always
+    labels:
+      - "traefik.enable=false"
+    volumes:
+      - backup:/mnt/backup
