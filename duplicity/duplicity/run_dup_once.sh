@@ -21,7 +21,7 @@ GOOGLE_DRIVE_SETTINGS=/duplicity/credentials duplicity \
     --allow-source-mismatch \
     --full-if-older-than=$OFFSITE_FULL_EVERY \
     --exclude-filelist /duplicity/excludes \
-    /backup ${OFFSITE_DEST}
+    /mnt/backup ${OFFSITE_DEST}
 
 if [ $VERBOSITY -gt 0 ]; then
     echo "Removing all but ${OFFSITE_KEEP_FULL} full backup from ${OFFSITE_DEST}"
