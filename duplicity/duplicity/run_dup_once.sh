@@ -26,7 +26,7 @@ GOOGLE_DRIVE_SETTINGS=/duplicity/credentials duplicity \
 if [ $VERBOSITY -gt 0 ]; then
     echo "Removing all but ${OFFSITE_KEEP_FULL} full backup from ${OFFSITE_DEST}"
 fi
-duplicity --verbosity=$VERBOSITY \
+GOOGLE_DRIVE_SETTINGS=/duplicity/credentials duplicity --verbosity=$VERBOSITY \
     remove-all-but-n-full ${OFFSITE_KEEP_FULL} \
     --force ${OFFSITE_DEST}
 
