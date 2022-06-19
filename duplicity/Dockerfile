@@ -5,7 +5,7 @@ ARG client_secret
 ARG duplicity_password
 ARG duplicity_offsite_dest
 
-RUN apt-get update && apt-get -y install duplicity python3-pydrive
+RUN apt-get update && apt-get -y install duplicity python3-pydrive cron
 
 ADD duplicity /duplicity
 RUN sed -i "s|<client-id>|${client_id}|g" /duplicity/credentials
