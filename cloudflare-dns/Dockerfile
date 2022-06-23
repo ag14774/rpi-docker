@@ -15,5 +15,5 @@ RUN sed -i "s|<cloudflare-subdomains>|${cloudflare_subdomains}|g" /cloudflare-dy
 
 RUN chmod +x /cloudflare-dyndns.sh
 RUN touch /var/log/cron.log
-RUN (crontab -l 2>/dev/null; echo "*/2 * * * * /cloudflare-dyndns.sh  > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
+RUN (crontab -l 2>/dev/null; echo "*/2 * * * * /cloudflare-dyndns.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 CMD ["cron", "-f"]
