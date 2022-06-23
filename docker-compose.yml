@@ -75,6 +75,7 @@ services:
       dockerfile: Dockerfile
       args:
         owncloud_version: ${OWNCLOUD_VERSION}
+    image: owncloud/server:${OWNCLOUD_VERSION}
     container_name: owncloud_server
     restart: always
     # Forward 8080 port to allow for local access as well. Comment out
