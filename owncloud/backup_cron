@@ -1,0 +1,1 @@
+0 0 0 0 0 www-data /backup_script.sh > /var/log/rsync.log 2>/var/log/rsync.log
