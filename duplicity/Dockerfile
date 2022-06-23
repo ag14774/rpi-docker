@@ -4,7 +4,7 @@ ARG duplicity_password
 ARG duplicity_offsite_dest
 
 RUN apk update && apk upgrade && apk add py3-pip duplicity
-RUN pip3 install google-auth-oauthlib
+RUN pip3 install google-api-python-client google-auth-oauthlib
 
 ADD duplicity /duplicity
 RUN sed -i "s|<duplicity-password>|${duplicity_password}|g" /duplicity/run_dup_once.sh
