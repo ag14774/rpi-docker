@@ -77,8 +77,10 @@ services:
         owncloud_version: ${OWNCLOUD_VERSION}
     container_name: owncloud_server
     restart: always
-    #ports:
-    #  - ${HTTP_PORT}:8080
+    # Forward 8080 port to allow for local access as well. Comment out
+    # if you only want access via the reverse proxy
+    ports:
+      - ${HTTP_PORT}:8080
     depends_on:
       - mariadb
       - redis
