@@ -155,8 +155,6 @@ services:
       context: ./duplicity
       dockerfile: Dockerfile
       args:
-        client_id: ${GDRIVE_CLIENT_ID}
-        client_secret: ${GDRIVE_CLIENT_SECRET}
         duplicity_password: ${DUPLICITY_PASSWORD}
         duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
     container_name: duplicity_gdrive_sync
