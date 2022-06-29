@@ -1,1 +1,1 @@
-0 0 0 0 0 www-data /backup_script.sh > /var/log/rsync.log 2>/var/log/rsync.log
+0 0 * * * root /backup_script.sh > /proc/1/fd/1 2>/proc/1/fd/2
