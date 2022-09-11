@@ -172,13 +172,15 @@ services:
     ports:
       - "${LOCAL_IPV4}:53:53/tcp"
       - "${LOCAL_IPV4}:53:53/udp"
-      - "${LOCAL_IPV6}:53:53/tcp"
-      - "${LOCAL_IPV6}:53:53/udp"
+      - "[${LOCAL_IPV6}]:53:53/tcp"
+      - "[${LOCAL_IPV6}]:53:53/udp"
       - "8081:80/tcp"
     environment:
       TZ: 'Europe/Zurich'
       WEBPASSWORD: ${PIHOLE_PASSWORD}
       PIHOLE_DNS_: ${PIHOLE_UPSTREAM_DNS}
+      FTLCONF_LOCAL_IPV4: ${LOCAL_IPV4}
+      FTLCONF_LOCAL_IPV6: ${LOCAL_IPV6}
       # Volumes store your data between container upgrades
     volumes:
       - './pihole/etc-pihole:/etc/pihole'
