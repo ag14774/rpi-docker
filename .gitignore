@@ -1,3 +1,3 @@
 .env
-duplicity/duplicity/credentials.json
+cron/duplicity/credentials.json
 traefik/acme.json
