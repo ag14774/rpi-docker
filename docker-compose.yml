@@ -4,21 +4,21 @@ volumes:
   files:
     driver: local
     driver_opts:
-        type: volume
-        device: ${OWNCLOUD_DATA_PATH}/files
-        o: bind
+      type: volume
+      device: ${OWNCLOUD_DATA_PATH}/files
+      o: bind
   mysql:
     driver: local
     driver_opts:
-        type: volume
-        device: ${OWNCLOUD_DATA_PATH}/mysql
-        o: bind
+      type: volume
+      device: ${OWNCLOUD_DATA_PATH}/mysql
+      o: bind
   redis:
     driver: local
     driver_opts:
-        type: volume
-        device: ${OWNCLOUD_DATA_PATH}/redis
-        o: bind
+      type: volume
+      device: ${OWNCLOUD_DATA_PATH}/redis
+      o: bind
   backup:
     driver: local
     driver_opts:
@@ -27,20 +27,6 @@ volumes:
       o: bind
 
 services:
-  cloudflare:
-    build:
-      context: ./cloudflare-dns
-      dockerfile: Dockerfile
-      args:
-        cloudflare_email: ${CLOUDFLARE_EMAIL}
-        cloudflare_key: ${CLOUDFLARE_KEY}
-        cloudflare_domain: ${CLOUDFLARE_DOMAIN}
-        cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAIN}
-    container_name: cloudflare_dyndns
-    restart: always
-    labels:
-      - "traefik.enable=false"
-
   reverse-proxy:
     # The official v2 Traefik docker image
     build:
@@ -107,7 +93,7 @@ services:
       - "traefik.http.routers.owncloud.tls.certresolver=le"
       - "traefik.enable=true"
     healthcheck:
-      test: ["CMD", "/usr/bin/healthcheck"]
+      test: [ "CMD", "/usr/bin/healthcheck" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -124,9 +110,21 @@ services:
       - MYSQL_USER=owncloud
       - MYSQL_PASSWORD=owncloud
       - MYSQL_DATABASE=owncloud
-    command: ["--max-allowed-packet=128M", "--innodb-log-file-size=64M"]
+    command:
+      [
+        "--max-allowed-packet=128M",
+        "--innodb-log-file-size=64M"
+      ]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-u", "root", "--password=owncloud"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-u",
+          "root",
+          "--password=owncloud"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -139,9 +137,9 @@ services:
     image: redis:6
     container_name: owncloud_redis
     restart: always
-    command: ["--databases", "1"]
+    command: [ "--databases", "1" ]
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -150,14 +148,18 @@ services:
     labels:
       - "traefik.enable=false"
 
-  duplicity:
+  cron:
     build:
-      context: ./duplicity
+      context: ./cron
       dockerfile: Dockerfile
       args:
         duplicity_password: ${DUPLICITY_PASSWORD}
         duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
-    container_name: duplicity_gdrive_sync
+        cloudflare_email: ${CLOUDFLARE_EMAIL}
+        cloudflare_key: ${CLOUDFLARE_KEY}
+        cloudflare_domain: ${CLOUDFLARE_DOMAIN}
+        cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAIN}
+    container_name: cron_container
     restart: always
     labels:
       - "traefik.enable=false"
