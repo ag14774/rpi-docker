@@ -192,6 +192,11 @@ services:
       PIHOLE_DNS_: ${PIHOLE_UPSTREAM_DNS}
       FTLCONF_LOCAL_IPV4: ${LOCAL_IPV4}
       FTLCONF_LOCAL_IPV6: ${LOCAL_IPV6}
+      FTLCONF_REFRESH_HOSTNAMES: ALL
+      DNSMASQ_LISTENING: all
+      REV_SERVER: true
+      REV_SERVER_TARGET: ${LOCAL_IPV4_GATEWAY}
+      REV_SERVER_CIDR: ${LOCAL_IPV4_SUBNET}
       # Volumes store your data between container upgrades
     volumes:
       - './pihole/etc-pihole:/etc/pihole'
