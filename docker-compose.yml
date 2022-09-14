@@ -1,4 +1,4 @@
-version: "3"
+version: "2.4"
 
 volumes:
   files:
@@ -25,6 +25,15 @@ volumes:
       type: volume
       device: ${LOCAL_BACKUP_PATH}
       o: bind
+
+networks:
+  ipv6_net:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.18.0.0/24"
+        - subnet: "fd00:dead:beef::/64"
 
 services:
   reverse-proxy:
@@ -169,6 +178,8 @@ services:
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
+    networks:
+      - ipv6_net
     ports:
       - "${LOCAL_IPV4}:53:53/tcp"
       - "${LOCAL_IPV4}:53:53/udp"
@@ -188,3 +199,5 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=false"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
