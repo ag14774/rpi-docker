@@ -24,7 +24,7 @@ RUN sed -i "s|<cloudflare-subdomains>|${cloudflare_subdomains}|g" /cloudflare-dn
 RUN chmod +x /cloudflare-dns/cloudflare-dyndns.py
 
 RUN touch /var/log/cron.log
-RUN (crontab -l 2>/dev/null; echo "0 0 * * * /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
+RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 RUN (crontab -l 2>/dev/null; echo "*/30 * * * * /cloudflare-dns/cloudflare-dyndns.py > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 
 CMD ["crond", "-f"]

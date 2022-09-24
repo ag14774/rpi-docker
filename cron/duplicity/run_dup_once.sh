@@ -27,6 +27,7 @@ GOOGLE_SERVICE_JSON_FILE=/duplicity/credentials.json \
   duplicity \
     --verbosity=$VERBOSITY \
     --allow-source-mismatch \
+    --volsize=1000
     --full-if-older-than=$OFFSITE_FULL_EVERY \
     --exclude-filelist /duplicity/excludes \
     /mnt/backup ${OFFSITE_DEST}
