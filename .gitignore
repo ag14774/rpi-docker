@@ -1,5 +1,4 @@
 .env
-cron/duplicity/credentials.json
 traefik/acme.json
 pihole/etc-pihole
 pihole/etc-dnsmasq.d

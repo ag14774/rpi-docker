@@ -10,11 +10,11 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
-RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl
-RUN pip3 install google-api-python-client google-auth-oauthlib requests python-dotenv
+RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl musl-dev
+RUN pip3 install boto3 requests python-dotenv
 
 ADD general/dotenv_writer /dotenv_writer
-RUN cargo install --path /dotenv_writer --root /bin
+RUN cargo install --path /dotenv_writer --root /
 
 RUN dotenv_writer -D CLOUDFLARE_EMAIL=${cloudflare_email} \
     -D CLOUDFLARE_KEY=${cloudflare_key} \
@@ -24,7 +24,7 @@ RUN dotenv_writer -D CLOUDFLARE_EMAIL=${cloudflare_email} \
     -D DUPLICITY_OFFSITE_DEST=${duplicity_offsite_dest} \
     -D AWS_ACCESS_KEY_ID=${gs_access_key_id} \
     -D AWS_SECRET_ACCESS_KEY=${gs_secret_key} \
-    --path /
+    --output /
 
 ADD cron/duplicity /duplicity
 RUN chmod +x /duplicity/run_dup_once.sh

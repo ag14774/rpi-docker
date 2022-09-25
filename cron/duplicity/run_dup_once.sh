@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-source /.env
+export $(cat /.env | xargs)
 
 export PASSPHRASE=${DUPLICITY_PASSWORD}
 export OFFSITE_DEST=${DUPLICITY_OFFSITE_DEST}
