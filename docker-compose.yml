@@ -164,6 +164,8 @@ services:
       args:
         duplicity_password: ${DUPLICITY_PASSWORD}
         duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
+        gs_access_key_id: ${GS_ACCESS_KEY}
+        gs_secret_key: ${GS_SECRET_KEY}
         cloudflare_email: ${CLOUDFLARE_EMAIL}
         cloudflare_key: ${CLOUDFLARE_KEY}
         cloudflare_domain: ${CLOUDFLARE_DOMAIN}

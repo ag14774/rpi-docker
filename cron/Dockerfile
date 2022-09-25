@@ -1,7 +1,9 @@
-FROM alpine:latest
+FROM rust:alpine
 
 ARG duplicity_password
 ARG duplicity_offsite_dest
+ARG gs_access_key_id
+ARG gs_secret_key
 
 ARG cloudflare_email
 ARG cloudflare_key
@@ -9,22 +11,29 @@ ARG cloudflare_domain
 ARG cloudflare_subdomains
 
 RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl
-RUN pip3 install google-api-python-client google-auth-oauthlib requests
+RUN pip3 install google-api-python-client google-auth-oauthlib requests python-dotenv
+
+ADD ../general/dotenv_writer /dotenv_writer
+RUN cargo install --path /dotenv_writer --root /bin
+
+RUN dotenv_writer -D CLOUDFLARE_EMAIL=${cloudflare_email} \
+    -D CLOUDFLARE_KEY=${cloudflare_key} \
+    -D CLOUDFLARE_DOMAIN=${cloudflare_domain} \
+    -D CLOUDFLARE_SUBDOMAINS=${cloudflare_subdomains} \
+    -D DUPLICITY_PASSWORD=${duplicity_password} \
+    -D DUPLICITY_OFFSITE_DEST=${duplicity_offsite_dest} \
+    -D AWS_ACCESS_KEY_ID=${gs_access_key_id} \
+    -D AWS_SECRET_ACCESS_KEY=${gs_secret_key} \
+    --path /
 
 ADD duplicity /duplicity
-RUN sed -i "s|<duplicity-password>|${duplicity_password}|g" /duplicity/run_dup_once.sh
-RUN sed -i "s|<duplicity-offsite-dest>|${duplicity_offsite_dest}|g" /duplicity/run_dup_once.sh
 RUN chmod +x /duplicity/run_dup_once.sh
 
 ADD cloudflare-dns /cloudflare-dns
-RUN sed -i "s|<cloudflare-email>|${cloudflare_email}|g" /cloudflare-dns/cloudflare-dyndns.py
-RUN sed -i "s|<cloudflare-key>|${cloudflare_key}|g" /cloudflare-dns/cloudflare-dyndns.py
-RUN sed -i "s|<cloudflare-domain>|${cloudflare_domain}|g" /cloudflare-dns/cloudflare-dyndns.py
-RUN sed -i "s|<cloudflare-subdomains>|${cloudflare_subdomains}|g" /cloudflare-dns/cloudflare-dyndns.py
 RUN chmod +x /cloudflare-dns/cloudflare-dyndns.py
 
 RUN touch /var/log/cron.log
 RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
-RUN (crontab -l 2>/dev/null; echo "*/30 * * * * /cloudflare-dns/cloudflare-dyndns.py > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
+RUN (crontab -l 2>/dev/null; echo "*/30 * * * * /cloudflare-dns/cloudflare-dyndns.py --dotenv-dir / > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 
 CMD ["crond", "-f"]

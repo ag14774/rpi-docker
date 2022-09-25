@@ -14,12 +14,15 @@
 #####################################
 """
 
+import argparse
 import logging
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from sre_constants import SUCCESS
 
 import requests
+from dotenv import dotenv_values
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -27,11 +30,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logging.getLogger().setLevel(logging.INFO)
-
-DOMAIN = "<cloudflare-domain>"  # Domain name for your account
-SUBDOMAIN_LIST = ["<cloudflare-subdomains>"]  # Subdomain(s) to update to new IP
-EMAIL = "<cloudflare-email>"  # Cloudflare login email
-API_KEY = "<cloudflare-key>"  # Cloudflare API key
 
 
 @dataclass(frozen=True)
@@ -87,6 +85,21 @@ def update_dns_record(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Sync IP with Cloudflare DNS")
+    parser.add_argument(
+        "--dotenv-dir", type=Path, help="Path to dir containing a dotenv file"
+    )
+    args = parser.parse_args()
+
+    config = dotenv_values(str(args.dotenv_dir / ".env"))
+
+    DOMAIN = config["CLOUDFLARE_DOMAIN"]  # Domain name for your account
+    SUBDOMAIN_LIST = [
+        config["CLOUDFLARE_SUBDOMAINS"]
+    ]  # Subdomain(s) to update to new IP
+    EMAIL = config["CLOUDFLARE_EMAIL"]  # Cloudflare login email
+    API_KEY = config["CLOUDFLARE_KEY"]  # Cloudflare API key
+
     new_ip = get_ip()
     zone_id = get_cloudflare_zone_id(domain=DOMAIN, email=EMAIL, api_key=API_KEY)
 
