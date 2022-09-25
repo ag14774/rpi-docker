@@ -159,8 +159,8 @@ services:
 
   cron:
     build:
-      context: ./cron
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./cron/Dockerfile
       args:
         duplicity_password: ${DUPLICITY_PASSWORD}
         duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
