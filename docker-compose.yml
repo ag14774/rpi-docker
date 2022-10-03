@@ -25,6 +25,16 @@ volumes:
       type: volume
       device: ${LOCAL_BACKUP_PATH}
       o: bind
+  owncloud_webdav:
+    driver: rclone
+    driver_opts:
+      type: webdav
+      webdav-url: ${WEBDAV_URL}
+      webdav-vendor: owncloud
+      webdav-user: ${WEBDAV_USER}
+      webdav-pass: ${WEBDAV_PASS}
+      vfs_cache_mode: writes
+      allow_other: 'true'
 
 networks:
   ipv4_net:
@@ -91,7 +101,6 @@ services:
       - mariadb
       - redis
       - reverse-proxy
-      - cron
     environment:
       - OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}
       - OWNCLOUD_DB_TYPE=mysql
