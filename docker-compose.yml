@@ -27,13 +27,19 @@ volumes:
       o: bind
 
 networks:
+  ipv4_net:
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.18.0.0/24"
   ipv6_net:
     enable_ipv6: true
     ipam:
       driver: default
       config:
-        - subnet: "172.18.0.0/24"
-        - subnet: "fd00:dead:beef::/64"
+        - subnet: "172.19.0.0/24"
+        - subnet: "fd00:dead:beef:1000::/64"
 
 services:
   reverse-proxy:
@@ -43,6 +49,8 @@ services:
       dockerfile: Dockerfile
       args:
         traefik_email: ${TRAEFIK_EMAIL}
+    networks:
+      - ipv4_net
     # Enables the web UI and tells Traefik to listen to docker
     command:
       #- "--api.insecure=true"
@@ -72,6 +80,8 @@ services:
         owncloud_version: ${OWNCLOUD_VERSION}
     image: owncloud/server:${OWNCLOUD_VERSION}
     container_name: owncloud_server
+    networks:
+      - ipv4_net
     restart: always
     # Forward 8080 port to allow for local access as well. Comment out
     # if you only want access via the reverse proxy
@@ -113,6 +123,8 @@ services:
   mariadb:
     image: mariadb:10.5
     container_name: owncloud_mariadb
+    networks:
+      - ipv4_net
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=owncloud
@@ -145,6 +157,8 @@ services:
   redis:
     image: redis:6
     container_name: owncloud_redis
+    networks:
+      - ipv4_net
     restart: always
     command: [ "--databases", "1" ]
     healthcheck:
@@ -171,6 +185,8 @@ services:
         cloudflare_domain: ${CLOUDFLARE_DOMAIN}
         cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAIN}
     container_name: cron_container
+    networks:
+      - ipv4_net
     restart: always
     labels:
       - "traefik.enable=false"
