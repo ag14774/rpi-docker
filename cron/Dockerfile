@@ -10,7 +10,7 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
-RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl musl-dev
+RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl openssh musl-dev
 RUN pip3 install boto3 requests python-dotenv
 
 ADD general/dotenv_writer /dotenv_writer
@@ -31,6 +31,9 @@ RUN chmod +x /duplicity/run_dup_once.sh
 
 ADD cron/cloudflare-dns /cloudflare-dns
 RUN chmod +x /cloudflare-dns/cloudflare-dyndns.py
+
+ADD cron/run_hourly/ /etc/periodic/hourly/
+RUN chmod +x /etc/periodic/hourly/*
 
 RUN touch /var/log/cron.log
 RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
