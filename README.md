@@ -18,6 +18,18 @@ sudo mkdir -p /var/lib/docker-plugins/rclone/config
 sudo mkdir -p /var/lib/docker-plugins/rclone/cache
 docker plugin install rclone/docker-volume-rclone:arm64 args="-v" --alias rclone --grant-all-permissions
 ```
+- (Optional) For Jellyfin hardware acceleration make sure to modify `/boot/config.txt` as follows:
+```
+# See /boot/overlays/README for all available options
+
+gpu_mem=128  # <---- Make sure you have at least 128
+...
+...
+dtoverlay=vc4-fkms-v3d,cma-512  # <---- Make sure this line is exactly like this
+dtoverlay=rpivid-v4l2  # <---- Add this line 
+...
+...
+```
 - Make sure the file `traefik/acme.json` is empty and has permissions `600`
 - Fill in your details in `.env`. Use `.env.example` as an example
 - `./deploy.sh`

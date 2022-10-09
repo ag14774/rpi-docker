@@ -233,3 +233,46 @@ services:
       - "traefik.enable=false"
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
+
+  jellyfin:
+    build:
+      context: ./jellyfin
+      dockerfile: Dockerfile
+      args:
+        host_video_gid: ${HOST_VIDEO_GID}
+    container_name: jellyfin
+    depends_on:
+      - owncloud
+    networks:
+      - ipv4_net
+    ports:
+      - 8096:8096
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
+    environment:
+      - TZ=Europe/Zurich
+    volumes:
+      - ${JELLYFIN_CONFIG_DIR}:/config
+      - owncloud_webdav:/media
+    devices:
+      # Specific to RPi4B
+      - /dev/video10:/dev/video10
+      - /dev/video11:/dev/video11
+      - /dev/video12:/dev/video12
+      - /dev/video13:/dev/video13
+      - /dev/video14:/dev/video14
+      - /dev/video15:/dev/video15
+      - /dev/video16:/dev/video16
+      - /dev/video18:/dev/video18
+      - /dev/video19:/dev/video19
+      - /dev/video20:/dev/video20
+      - /dev/video21:/dev/video21
+      - /dev/video22:/dev/video22
+      - /dev/video23:/dev/video23
+      - /dev/video31:/dev/video31
+      - /dev/media0:/dev/media0
+      - /dev/media1:/dev/media1
+      - /dev/media2:/dev/media2
+      - /dev/media3:/dev/media3
+    restart: "unless-stopped"
