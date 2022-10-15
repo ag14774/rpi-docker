@@ -1,4 +1,4 @@
-FROM rust:alpine
+FROM alpine:latest
 
 ARG duplicity_password
 ARG duplicity_offsite_dest
@@ -10,11 +10,10 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
-RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl openssh musl-dev
+RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl openssh
 RUN pip3 install boto3 requests python-dotenv
 
-ADD general/dotenv_writer /dotenv_writer
-RUN cargo install --path /dotenv_writer --root /
+COPY general/dotenv_writer/target/aarch64-unknown-linux-musl/release/dotenv_writer /bin/dotenv_writer
 
 RUN dotenv_writer -D CLOUDFLARE_EMAIL=${cloudflare_email} \
     -D CLOUDFLARE_KEY=${cloudflare_key} \
