@@ -1,11 +1,9 @@
 use cf_client::{utils as cf_utils, CFClient, DNSRecord};
 use clap::{Parser, ValueHint};
-use dotenv;
 use email_address::EmailAddress;
 use log::info;
 use std::net::IpAddr;
 use std::path::PathBuf;
-use tokio;
 
 /// Simple utility to update Cloudflare DNS record
 #[derive(Parser, Debug)]
