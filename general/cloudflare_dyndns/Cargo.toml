@@ -1,0 +1,28 @@
+[package]
+name = "cloudflare_dyndns"
+version = "0.1.0"
+authors = ["Andreas Georgiou <me@ageorgiou.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.2.22", features = ["derive"] }
+dotenv = "0.15.0"
+email_address = "0.2.3"
+log = "0.4.17"
+reqwest = { version="0.11.12", features=["json"] }
+serde_json = "1.0.86"
+tokio = { version="1.21.2", features=["rt", "macros"] }
+
+[lib]
+name = "cf_client"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cf_dyndns"
+path = "src/main.rs"
+
+[dev-dependencies]
+mockito = "0.31.0"
+tokio-test = "0.4.2"
