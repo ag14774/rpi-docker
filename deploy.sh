@@ -10,6 +10,12 @@ RUSTFLAGS='-C target-feature=+crt-static' cargo build \
     --release \
     --target=aarch64-unknown-linux-musl
 
+echo "Compiling cf_dyndns"
+RUSTFLAGS='-C target-feature=+crt-static' cargo build \
+    --manifest-path=cron/cloudflare-dns/Cargo.toml  \
+    --release \
+    --target=aarch64-unknown-linux-musl
+
 echo "Generating PiHole configuration files from templates"
 export $(grep LOCAL_IPV4_GATEWAY= .env | xargs)
 mkdir -p ./pihole/etc-dnsmasq.d/
