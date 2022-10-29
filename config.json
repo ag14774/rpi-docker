@@ -1,0 +1,51 @@
+{
+  "paths": {
+    "data_dir": "/home/user/data",
+    "backup_dir": "/mnt/backup"
+  },
+  "owncloud": {
+    "version": 10.8,
+    "username": "admin",
+    "password": "admin",
+    "domain": "myowncloud.example.com"
+  },
+  "cloudflare": {
+    "email": "email@example.com",
+    "api_key": "myapikey",
+    "domain": "example.com",
+    "include_owncloud_subdomain": true,
+    "subdomains": [
+      "myowncloud"
+    ]
+  },
+  "traefik": {
+    "le_email": "email@example.com"
+  },
+  "duplicity": {
+    "password": "pass",
+    "offsite_dest": "s3://bucket-name",
+    "access_key": "offsite_key",
+    "secret_key": "secret_key"
+  },
+  "pihole": {
+    "password": "admin",
+    "upstream_dns": [
+      "8.8.8.8",
+      "8.8.4.4"
+    ],
+    "use_gateway_as_dns": true
+  },
+  "jellyfin": {
+    "webdav_url": "<webdav url here>",
+    "host_video_gid": "<GID of the video group on the host RPi>",
+    "webdav_user": "user",
+    "webdav_pass": "pass"
+  },
+  "network": {
+    "iface_name": null,
+    "ipv4_gateway": "192.168.178.1",
+    "ipv4_subnet": null,
+    "ipv4_host": null,
+    "ipv6_host": null
+  }
+}
