@@ -69,10 +69,7 @@ services:
       - ipv4_net
     # Enables the web UI and tells Traefik to listen to docker
     command:
-      #- "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - "--configFile=/traefik.toml"
     restart: always
     ports:
       # The HTTP port

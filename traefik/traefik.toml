@@ -1,10 +1,10 @@
 [api]
+dashboard = false
 # insecure=true
 
-#[log]
-#  level = "DEBUG"
-
 [providers.docker]
+exposedByDefault = false
+
   [entryPoints.web]
   address = ":80"
 
@@ -15,7 +15,6 @@
 
   [certificatesResolvers.le.acme]
   email = "<traefik-email>"
-  storage = "/acme.json"
-# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"    
+  storage = "/acme.json"   
     [certificatesResolvers.le.acme.httpChallenge]
     entryPoint = "web"
