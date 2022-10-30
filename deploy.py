@@ -444,15 +444,15 @@ class Config(JSONDataclass):
             # Filter ports if any
             domain = domain.split(":")[0]
             if domain.endswith(self.cloudflare.domain):
-                domain = domain.split(self.cloudflare.domain)[0]
+                domain = domain.split(f".{self.cloudflare.domain}")[0]
             self.cloudflare.subdomains.append(domain)
             self.cloudflare.subdomains = list(set(self.cloudflare.subdomains))
 
         if self.pihole.use_gateway_as_dns:
             for gateway in [self.network.ipv4_gateway, self.network.ipv6_gateway]:
                 assert gateway is not None, "Something wrong happened"
-                if gateway not in self.pihole.upstream_dns:
-                    self.pihole.upstream_dns.append(gateway)
+                self.pihole.upstream_dns.append(gateway)
+            self.pihole.upstream_dns = list(set(self.pihole.upstream_dns))
 
 
 @typing.no_type_check
@@ -550,23 +550,32 @@ def get_rust_target() -> str:
 
 
 def compile_rust_code(project_root: str | Path) -> None:
-    environ = dict(os.environ)
-    environ["RUSTFLAGS"] = "-C target-feature=+crt-static"
-    project_root = Path(project_root)
-    subprocess.run(
-        [
-            "cargo",
-            "install",
-            "--target",
-            get_rust_target(),
-            "--path",
-            str(project_root),
-            "--root",
-            str(project_root / "build"),
-        ],
-        check=True,
-        env=environ,
-    )
+    project_root = Path(project_root).absolute()
+
+    target = get_rust_target()
+    arch = target.split("-")[0]
+    docker_tag = f"{arch}-musl"
+
+    cmd = [
+        "docker",
+        "run",
+        "--rm",
+        "-it",
+        "-v",
+        f"{str(project_root)}:/home/rust/src",
+        "-v",
+        "cargo-git:/root/.cargo/git",
+        "-v",
+        "cargo-registry:/root/.cargo/registry",
+        f"messense/rust-musl-cross:{docker_tag}",
+        "cargo",
+        "install",
+        "--path",
+        "/home/rust/src",
+        "--root",
+        "/home/rust/src/build",
+    ]
+    subprocess.run(cmd, check=True)
 
 
 def generate_dotenv(config: Config):
@@ -584,7 +593,7 @@ def generate_dotenv(config: Config):
     owncloud_traefik_rule = f"Host({','.join(owncloud_domains)})"
     env["OWNCLOUD_TRAEFIK_RULE"] = owncloud_traefik_rule
 
-    assert len(config.cloudflare.subdomains) > 1, "Currently at least one subdomain is required"
+    assert len(config.cloudflare.subdomains) >= 1, "Currently at least one subdomain is required"
     env["CLOUDFLARE_EMAIL"] = str(config.cloudflare.email)
     env["CLOUDFLARE_KEY"] = str(config.cloudflare.api_key)
     env["CLOUDFLARE_DOMAIN"] = str(config.cloudflare.domain)
@@ -614,6 +623,36 @@ def generate_dotenv(config: Config):
         cmd.extend(["-D", f"{key}={val}"])
     cmd.extend(["--output", "./"])
     subprocess.run(cmd, check=True)
+
+
+def generate_pihole_config(config: Config):
+    assert config.network.ipv4_host is not None, "IPv4 host address cannot be None"
+    assert config.network.ipv4_gateway is not None, "IPv4 gateway cannot be None"
+
+    # Configure IPv6 hostname resolving
+    dest_directory = Path("./pihole/etc-dnsmasq.d/")
+    dest_directory.mkdir(parents=True, exist_ok=True)
+    src_text = Path("./pihole/99-forwarders.conf").read_text()
+    final_text = src_text.replace("<ipv4-gateway>", config.network.ipv4_gateway)
+    (dest_directory / "99-forwarders.conf").write_text(final_text)
+
+    # Configure custom DNS entries
+    custom_dns = []
+    existing_dns_entries_file = Path("./pihole/etc-pihole/custom.list")
+    if existing_dns_entries_file.exists():
+        existing_dns_text = existing_dns_entries_file.read_text().strip().split("\n")
+        custom_dns.extend([tuple(entry.split(" ", 1)) for entry in existing_dns_text])
+    custom_dns.extend(
+        [
+            (config.network.ipv4_host, "rpi.local"),
+            (config.network.ipv4_host, "owncloud.local"),
+            (config.network.ipv4_gateway, "router.local"),
+        ]
+    )
+    custom_dns = list(set(custom_dns))
+    custom_dns_text = "\n".join([" ".join(entry) for entry in custom_dns])
+    existing_dns_entries_file.parent.mkdir(exist_ok=True, parents=True)
+    existing_dns_entries_file.write_text(custom_dns_text)
 
 
 def main():
@@ -676,8 +715,14 @@ def main():
     logger.info("Compiling cf_dyndns...")
     compile_rust_code("./cron/cloudflare-dns")
 
+    logger.info("Generating PiHole configuration files from templates")
+    generate_pihole_config(config)
+
     logger.info("Generating .env file...")
     generate_dotenv(config)
+
+    logger.info("Starting docker containers...")
+    subprocess.run(["docker-compose", "up", "-d"], check=True)
 
 
 if __name__ == "__main__":

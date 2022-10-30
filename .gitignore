@@ -1,4 +1,6 @@
 .vscode
+venv
+.python-version
 .env
 traefik/acme.json
 pihole/etc-pihole
