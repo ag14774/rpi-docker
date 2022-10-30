@@ -138,7 +138,14 @@ class PiHoleConfig(JSONDataclass):
     use_gateway_as_dns: bool = True
 
     def __post_init__(self):
-        self.upstream_dns = list(set(self.upstream_dns))
+        seen = set()
+        deduplicated = []
+        # Maintain order
+        for dns in self.upstream_dns:
+            if dns not in seen:
+                seen.add(dns)
+                deduplicated.append(dns)
+        self.upstream_dns = deduplicated
 
 
 @dataclass
@@ -449,10 +456,9 @@ class Config(JSONDataclass):
             self.cloudflare.subdomains = list(set(self.cloudflare.subdomains))
 
         if self.pihole.use_gateway_as_dns:
-            for gateway in [self.network.ipv4_gateway, self.network.ipv6_gateway]:
+            for gateway in [self.network.ipv6_gateway, self.network.ipv4_gateway]:
                 assert gateway is not None, "Something wrong happened"
-                self.pihole.upstream_dns.append(gateway)
-            self.pihole.upstream_dns = list(set(self.pihole.upstream_dns))
+                self.pihole.upstream_dns = [gateway] + self.pihole.upstream_dns
 
 
 @typing.no_type_check
