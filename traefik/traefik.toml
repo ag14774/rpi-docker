@@ -5,14 +5,8 @@
 #  level = "DEBUG"
 
 [providers.docker]
-  [entryPoints.webnoredirect]
-  address = ":80"
-
   [entryPoints.web]
   address = ":80"
-    [entryPoints.web.http.redirections.entryPoint]
-    to = "websecure"
-    scheme = "https"
 
   [entryPoints.websecure]
   address = ":443"
