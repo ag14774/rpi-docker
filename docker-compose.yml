@@ -121,10 +121,12 @@ services:
       - OWNCLOUD_REDIS_HOST=redis
     labels:
       - "traefik.http.routers.owncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
-      - "traefik.docker.network=web"
       - "traefik.http.routers.owncloud.entrypoints=websecure"
       - "traefik.http.routers.owncloud.tls=true"
       - "traefik.http.routers.owncloud.tls.certresolver=le"
+      - "traefik.http.routers.owncloudlocal.rule=Host(`owncloud.local`)"
+      - "traefik.http.routers.owncloudlocal.local.entrypoints=webnoredirect"
+      - "traefik.http.routers.owncloudlocal.tls=false"
       - "traefik.enable=true"
     healthcheck:
       test: [ "CMD", "/usr/bin/healthcheck" ]

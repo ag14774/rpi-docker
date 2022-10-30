@@ -598,11 +598,7 @@ def generate_dotenv(config: Config):
     env["OWNCLOUD_VERSION"] = str(config.owncloud.version)
     env["ADMIN_USERNAME"] = str(config.owncloud.username)
     env["ADMIN_PASSWORD"] = str(config.owncloud.password)
-    owncloud_domains = ["owncloud.local"]
-    if config.owncloud.domain:
-        owncloud_domains.append(config.owncloud.domain)
-    owncloud_domains = [f"`{domain}`" for domain in owncloud_domains]
-    owncloud_traefik_rule = f"Host({','.join(owncloud_domains)})"
+    owncloud_traefik_rule = f"Host(`{config.owncloud.domain}`)"
     env["OWNCLOUD_TRAEFIK_RULE"] = owncloud_traefik_rule
 
     assert len(config.cloudflare.subdomains) >= 1, "Currently at least one subdomain is required"
