@@ -11,6 +11,7 @@ import os
 import socket
 import struct
 import subprocess
+import time
 import typing
 from cmath import pi
 from dataclasses import dataclass, field, fields, is_dataclass
@@ -732,7 +733,11 @@ def main():
     logger.info("Generating .env file...")
     generate_dotenv(config)
 
-    logger.info("Starting docker containers...")
+    logger.info("Starting docker containers...(Stage 1)")
+    subprocess.run(["docker-compose", "up", "-d", "owncloud"], check=True)
+    time.sleep(5)
+    print()
+    logger.info("Starting docker containers...(Stage 2)")
     subprocess.run(["docker-compose", "up", "-d"], check=True)
 
 

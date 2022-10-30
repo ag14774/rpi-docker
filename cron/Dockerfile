@@ -10,8 +10,7 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
-RUN apk update && apk upgrade && apk add py3-pip duplicity jq curl openssh
-RUN pip3 install boto3 requests python-dotenv
+RUN apk update && apk upgrade && apk add duplicity jq curl openssh
 
 COPY general/dotenv_writer/build/bin/dotenv_writer /bin/dotenv_writer
 RUN chmod +x /bin/dotenv_writer
