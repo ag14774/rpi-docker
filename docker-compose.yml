@@ -283,3 +283,5 @@ services:
       - /dev/media2:/dev/media2
       - /dev/media3:/dev/media3
     restart: "unless-stopped"
+    labels:
+      - "traefik.enable=false"
