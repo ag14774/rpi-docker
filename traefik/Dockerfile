@@ -1,4 +1,4 @@
-FROM traefik:v2.5
+FROM traefik:v2.9.4
 
 ARG traefik_email
 

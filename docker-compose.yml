@@ -58,13 +58,14 @@ networks:
         - subnet: "fd00:dead:beef:1000::/64"
 
 services:
-  reverse-proxy:
+  traefik:
     # The official v2 Traefik docker image
     build:
       context: ./traefik
       dockerfile: Dockerfile
       args:
         traefik_email: ${TRAEFIK_EMAIL}
+    container_name: traefik
     networks:
       - ipv4_net
     # Enables the web UI and tells Traefik to listen to docker
@@ -103,7 +104,7 @@ services:
     depends_on:
       - mariadb
       - redis
-      - reverse-proxy
+      - traefik
     environment:
       - OWNCLOUD_DOMAIN=localhost:8080
       - OWNCLOUD_DB_TYPE=mysql
@@ -121,8 +122,13 @@ services:
       - "traefik.http.routers.owncloud.entrypoints=websecure"
       - "traefik.http.routers.owncloud.tls=true"
       - "traefik.http.routers.owncloud.tls.certresolver=le"
-      - "traefik.http.routers.owncloudlocal.rule=Host(`owncloud.local`)"
-      - "traefik.http.routers.owncloudlocal.local.entrypoints=web"
+      - "traefik.http.middlewares.httptohttps.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.httptohttps.redirectscheme.permanent=true"
+      - "traefik.http.routers.httpowncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
+      - "traefik.http.routers.httpowncloud.entrypoints=web"
+      - "traefik.http.routers.httpowncloud.middlewares=httptohttps@docker"
+      - "traefik.http.routers.localowncloud.rule=Host(`owncloud.local`)"
+      - "traefik.http.routers.localowncloud.entrypoints=web"
       - "traefik.enable=true"
     healthcheck:
       test: [ "CMD", "/usr/bin/healthcheck" ]

@@ -5,6 +5,7 @@ dashboard = false
 [providers.docker]
 exposedByDefault = false
 
+[entryPoints]
   [entryPoints.web]
   address = ":80"
 
@@ -13,8 +14,9 @@ exposedByDefault = false
   [entryPoints.websecure.http.tls]
   certResolver = "le"
 
-  [certificatesResolvers.le.acme]
-  email = "<traefik-email>"
-  storage = "/acme.json"   
-    [certificatesResolvers.le.acme.httpChallenge]
-    entryPoint = "web"
+[certificatesResolvers.le.acme]
+email = "<traefik-email>"
+storage = "/acme.json"
+# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  [certificatesResolvers.le.acme.httpChallenge]
+  entryPoint = "web"
