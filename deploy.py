@@ -487,31 +487,31 @@ def check_docker_ipv6() -> bool:
     docker_json_path = get_docker_config_path()
 
     if not docker_json_path.exists():
-        logger.error("No docker daemon.json file was found in %s.", docker_json_path)
+        logger.warning("No docker daemon.json file was found in %s.", docker_json_path)
         return False
 
     docker_config: Dict[str, Any] = json.loads(docker_json_path.read_text())
     if docker_config.get("ipv6") is not True:
-        logger.error("The flag `ipv6` is not set to true in docker daemon.json")
+        logger.warning("The flag `ipv6` is not set to true in docker daemon.json")
         return False
     if docker_config.get("experimental") is not True:
-        logger.error("The flag `experimental` is not set to true in docker daemon.json")
+        logger.warning("The flag `experimental` is not set to true in docker daemon.json")
         return False
     if docker_config.get("ip6tables") is not True:
-        logger.error("The flag `ip6tables` is not set to true in docker daemon.json")
+        logger.warning("The flag `ip6tables` is not set to true in docker daemon.json")
         return False
     if docker_config.get("fixed-cidr-v6") is None:
-        logger.error("The setting `fixed-cidr-v6` could not be found or is set to null")
+        logger.warning("The setting `fixed-cidr-v6` could not be found or is set to null")
         return False
 
     try:
         ipv6_address = IPv6Network(docker_config.get("fixed-cidr-v6"), strict=True)
     except AddressValueError:
-        logger.error("Invalid IPv6 format in daemon.json file")
+        logger.warning("Invalid IPv6 format in daemon.json file")
         return False
 
     if not ipv6_address.subnet_of(IPv6Network("fd00::/8")):
-        logger.error("Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses")
+        logger.warning("Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses")
         return False
 
     return True
@@ -673,14 +673,14 @@ def generate_pihole_config(config: Config):
     existing_dns_entries_file.write_text(custom_dns_text)
 
 
-def check_acme_json():
+def check_and_fix_acme_json():
     acme_file = Path("./traefik/acme.json")
     if not acme_file.exists():
-        logger.info("Creating acme.json...")
+        logger.warning("acme.json does not exist...creating...")
         acme_file.touch()
 
     if oct(acme_file.stat().st_mode) != "0o100600":
-        logger.info("Fixing acme.json permissions...")
+        logger.warning("Fixing acme.json permissions...")
         acme_file.chmod(0o600)
 
 
@@ -697,6 +697,71 @@ def check_owncloud_user_exists(user: str) -> bool:
     return user in occ_output
 
 
+def add_owncloud_user(user: str, password: str):
+    env = os.environ.copy()
+    env["OC_PASS"] = password
+    subprocess.run(
+        [
+            "docker-compose",
+            "exec",
+            "owncloud",
+            "occ",
+            "user:add",
+            "--password-from-env",
+            user,
+        ],
+        check=True,
+        env=env,
+    )
+
+
+def check_rclone_plugin() -> bool:
+    plugin_out = subprocess.run(
+        [
+            "docker",
+            "plugin",
+            "list",
+            "--format",
+            "{{.Name}},{{.Enabled}}",
+        ],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout
+    for line in plugin_out.split("\n"):
+        plugin, enabled = line.split(",")
+        if plugin.startswith("rclone") and enabled == "true":
+            return True
+    return False
+
+
+@run_as_root
+def install_rclone_plugin():
+    # sudo mkdir -p /var/lib/docker-plugins/rclone/config
+    # sudo mkdir -p /var/lib/docker-plugins/rclone/cache
+    # docker plugin install rclone/docker-volume-rclone:arm64 args="-v" --alias rclone --grant-all-permissions
+    config_path = Path("/var/lib/docker-plugins/rclone/config")
+    config_path.mkdir(exist_ok=True, parents=True)
+    cache_path = Path("/var/lib/docker-plugins/rclone/cache")
+    cache_path.mkdir(exist_ok=True, parents=True)
+
+    arch_to_tag = {"aarch64": "arm64", "x86_64": "amd64"}
+    subprocess.run(
+        [
+            "docker",
+            "plugin",
+            "install",
+            f"rclone/docker-volume-rclone:{arch_to_tag[os.uname().machine]}",
+            "args='-v'",
+            "--alias",
+            "rclone",
+            "--grant-all-permissions",
+        ],
+        check=True,
+    )
+    subprocess.run(["docker", "plugin", "enable", "rclone"], check=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tool for deploying homelab")
     parser.add_argument(
@@ -704,12 +769,17 @@ def main():
         action="store_true",
         help="Correct docker daemon.json file if an error is found (requires root)",
     )
+    parser.add_argument(
+        "--install-rclone-plugin",
+        action="store_true",
+        help="Install the docker rclone plugin if not found (requires root)",
+    )
     parser.add_argument("-y", action="store_true", help="Do not prompt user for confirmation")
     args = parser.parse_args()
 
     requires_root = False
 
-    if args.fix_docker_config:
+    if args.fix_docker_config or args.install_rclone_plugin:
         requires_root = True
 
     if requires_root:
@@ -720,6 +790,14 @@ def main():
             logger.error("Could not find env variable SUDO_UID. Are you sure you are running with sudo?")
             return
         os.seteuid(int(os.environ["SUDO_UID"]))
+
+    if (arch := os.uname().machine) != "aarch64":
+        logger.warning(
+            "This deployment script was made for RPi 4B which is aarch64..Current architecture is %s. "
+            "The script might fail on other architectures...",
+            arch,
+        )
+        time.sleep(2)
 
     config_path = Path(__file__).resolve().absolute().parent / "config.json"
     logger.info("Reading config...")
@@ -736,8 +814,6 @@ def main():
     logger.info("Detected host IPv6 address: %s", config.network.ipv6_host)
     logger.info("Detected gateway IPv6 address: %s", config.network.ipv6_gateway)
 
-    logger.info(f"{os.environ['PATH']}")
-
     if not args.y:
         print()
         input("If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate")
@@ -753,6 +829,17 @@ def main():
         logger.info("Fixing daemon.json...")
         correct_docker_config()
 
+    logger.info("Checking if docker plugin rclone is properly configured...")
+    if not check_rclone_plugin():
+        if not args.install_rclone_plugin:
+            logger.error(
+                "The docker plugin rclone appears to be misconfigured or it is not installed. "
+                "Re-run with --install-rclone-plugin if you would like to fix it."
+            )
+            return
+        logger.info("Fixing docker rclone plugin...")
+        install_rclone_plugin()
+
     logger.info("Compiling dotenv-writer...")
     compile_rust_code("./general/dotenv_writer")
 
@@ -763,7 +850,7 @@ def main():
     generate_pihole_config(config)
 
     logger.info("Checking acme.json permissions...")
-    check_acme_json()
+    check_and_fix_acme_json()
 
     logger.info("Generating .env file...")
     generate_dotenv(config)
@@ -771,8 +858,11 @@ def main():
     logger.info("Starting docker containers...(Stage 1)")
     subprocess.run(["docker-compose", "up", "-d", "owncloud"], check=True)
     time.sleep(5)
-    print(check_owncloud_user_exists(config.jellyfin.webdav_user))
-    # TODO use docker exec occ to check for jellyfin webdav user and create if it doesn't exist
+
+    logger.info("Checking if WebDAV jellyfin user exists in OwnCloud...")
+    if check_owncloud_user_exists(config.jellyfin.webdav_user):
+        logger.warning("No OwnCloud user %s was found...creating...")
+        add_owncloud_user(config.jellyfin.webdav_user, config.jellyfin.webdav_pass)
 
     logger.info("Starting docker containers...(Stage 2)")
     subprocess.run(["docker-compose", "up", "-d"], check=True)
