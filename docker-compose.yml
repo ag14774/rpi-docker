@@ -68,6 +68,7 @@ services:
     container_name: traefik
     networks:
       - ipv4_net
+      - ipv6_net
     # Enables the web UI and tells Traefik to listen to docker
     command:
       - "--configFile=/traefik.toml"
@@ -247,8 +248,13 @@ services:
       - './pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
     restart: unless-stopped
     labels:
+      - "traefik.http.middlewares.localpiholeadmin.redirectregex.regex=^(http://)?pihole\\.local/?$$"
+      - "traefik.http.middlewares.localpiholeadmin.redirectregex.replacement=$${1}pihole.local/admin"
+      - "traefik.http.middlewares.localpiholeadmin.redirectregex.permanent=true"
       - "traefik.http.routers.localpihole.rule=Host(`pihole.local`)"
       - "traefik.http.routers.localpihole.entrypoints=web"
+      - "traefik.http.routers.localpihole.middlewares=localpiholeadmin@docker"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
       - "traefik.enable=true"
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
@@ -298,4 +304,6 @@ services:
     labels:
       - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.local`)"
       - "traefik.http.routers.localjellyfin.entrypoints=web"
+      # The port is different than 80, so we need to specify which port the service is running
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       - "traefik.enable=true"
