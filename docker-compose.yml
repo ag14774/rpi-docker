@@ -323,5 +323,5 @@ services:
       - "traefik.http.routers.localglances.rule=Host(`glances.local`)"
       - "traefik.http.routers.localglances.entrypoints=web"
       # The port is different than 80, so we need to specify which port the service is running
-      - "traefik.http.services.jellyfin.loadbalancer.server.port=61208"
+      - "traefik.http.services.glances.loadbalancer.server.port=61208"
       - "traefik.enable=true"
