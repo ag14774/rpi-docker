@@ -549,11 +549,21 @@ def correct_docker_config(ipv6_network: Optional[IPv6Network] = None):
 
 
 def get_rust_target() -> str:
-    if (target := os.environ.get(_RUST_TARGET_ENV_VARIABLE)) is None:
+    if (target := os.environ.get(_RUST_TARGET_ENV_VARIABLE)) is not None:
+        return target
+
+    try:
         process = subprocess.run(["rustup", "default"], check=True, text=True, capture_output=True)
         target = process.stdout.strip().split(" ")[0].split("-", 1)[1]
-
-    return target
+        return target
+    except Exception as e:
+        if os.getuid() == 0 and (username := os.environ.get("SUDO_USER")) is not None:
+            rustup_settings = (Path("/home") / username / ".rustup" / "settings.toml").read_text().split("\n")
+            for line in rustup_settings:
+                if line.startswith("default_toolchain"):
+                    target = line.split("=")[1].strip('"').split("-", 1)[1]
+                    return target
+        raise
 
 
 def compile_rust_code(project_root: str | Path) -> None:
@@ -663,6 +673,30 @@ def generate_pihole_config(config: Config):
     existing_dns_entries_file.write_text(custom_dns_text)
 
 
+def check_acme_json():
+    acme_file = Path("./traefik/acme.json")
+    if not acme_file.exists():
+        logger.info("Creating acme.json...")
+        acme_file.touch()
+
+    if oct(acme_file.stat().st_mode) != "0o100600":
+        logger.info("Fixing acme.json permissions...")
+        acme_file.chmod(0o600)
+
+
+def check_owncloud_user_exists(user: str) -> bool:
+    occ_output = json.loads(
+        subprocess.run(
+            ["docker-compose", "exec", "owncloud", "occ", "user:list", "--output=json"],
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout
+    )
+
+    return user in occ_output
+
+
 def main():
     parser = argparse.ArgumentParser(description="Tool for deploying homelab")
     parser.add_argument(
@@ -702,6 +736,8 @@ def main():
     logger.info("Detected host IPv6 address: %s", config.network.ipv6_host)
     logger.info("Detected gateway IPv6 address: %s", config.network.ipv6_gateway)
 
+    logger.info(f"{os.environ['PATH']}")
+
     if not args.y:
         print()
         input("If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate")
@@ -726,13 +762,18 @@ def main():
     logger.info("Generating PiHole configuration files from templates")
     generate_pihole_config(config)
 
+    logger.info("Checking acme.json permissions...")
+    check_acme_json()
+
     logger.info("Generating .env file...")
     generate_dotenv(config)
 
     logger.info("Starting docker containers...(Stage 1)")
     subprocess.run(["docker-compose", "up", "-d", "owncloud"], check=True)
     time.sleep(5)
-    print()
+    print(check_owncloud_user_exists(config.jellyfin.webdav_user))
+    # TODO use docker exec occ to check for jellyfin webdav user and create if it doesn't exist
+
     logger.info("Starting docker containers...(Stage 2)")
     subprocess.run(["docker-compose", "up", "-d"], check=True)
 
