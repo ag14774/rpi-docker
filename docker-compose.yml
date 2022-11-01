@@ -5,19 +5,25 @@ volumes:
     driver: local
     driver_opts:
       type: volume
-      device: ${OWNCLOUD_DATA_PATH}/files
+      device: ${DATA_PATH}/files
       o: bind
   mysql:
     driver: local
     driver_opts:
       type: volume
-      device: ${OWNCLOUD_DATA_PATH}/mysql
+      device: ${DATA_PATH}/mysql
       o: bind
   redis:
     driver: local
     driver_opts:
       type: volume
-      device: ${OWNCLOUD_DATA_PATH}/redis
+      device: ${DATA_PATH}/redis
+      o: bind
+  jellyfin_config:
+    driver: local
+    driver_opts:
+      type: volume
+      device: ${DATA_PATH}/jellyfin_config
       o: bind
   backup:
     driver: local
@@ -52,21 +58,19 @@ networks:
         - subnet: "fd00:dead:beef:1000::/64"
 
 services:
-  reverse-proxy:
+  traefik:
     # The official v2 Traefik docker image
     build:
       context: ./traefik
       dockerfile: Dockerfile
       args:
         traefik_email: ${TRAEFIK_EMAIL}
+    container_name: traefik
     networks:
       - ipv4_net
     # Enables the web UI and tells Traefik to listen to docker
     command:
-      #- "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - "--configFile=/traefik.toml"
     restart: always
     ports:
       # The HTTP port
@@ -96,13 +100,13 @@ services:
     # Forward 8080 port to allow for local access as well. Comment out
     # if you only want access via the reverse proxy
     ports:
-      - ${HTTP_PORT}:8080
+      - 8080:8080
     depends_on:
       - mariadb
       - redis
-      - reverse-proxy
+      - traefik
     environment:
-      - OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}
+      - OWNCLOUD_DOMAIN=localhost:8080
       - OWNCLOUD_DB_TYPE=mysql
       - OWNCLOUD_DB_NAME=owncloud
       - OWNCLOUD_DB_USERNAME=owncloud
@@ -114,11 +118,17 @@ services:
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
     labels:
-      - "traefik.http.routers.owncloud.rule=${OWNCLOUD_CERTIFICATE_DOMAIN}"
-      - "traefik.docker.network=web"
+      - "traefik.http.routers.owncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
       - "traefik.http.routers.owncloud.entrypoints=websecure"
       - "traefik.http.routers.owncloud.tls=true"
       - "traefik.http.routers.owncloud.tls.certresolver=le"
+      - "traefik.http.middlewares.httptohttps.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.httptohttps.redirectscheme.permanent=true"
+      - "traefik.http.routers.httpowncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
+      - "traefik.http.routers.httpowncloud.entrypoints=web"
+      - "traefik.http.routers.httpowncloud.middlewares=httptohttps@docker"
+      - "traefik.http.routers.localowncloud.rule=Host(`owncloud.local`)"
+      - "traefik.http.routers.localowncloud.entrypoints=web"
       - "traefik.enable=true"
     healthcheck:
       test: [ "CMD", "/usr/bin/healthcheck" ]
@@ -187,12 +197,12 @@ services:
       args:
         duplicity_password: ${DUPLICITY_PASSWORD}
         duplicity_offsite_dest: ${DUPLICITY_OFFSITE_DEST}
-        gs_access_key_id: ${GS_ACCESS_KEY}
-        gs_secret_key: ${GS_SECRET_KEY}
+        aws_access_key_id: ${AWS_ACCESS_KEY}
+        aws_secret_key: ${AWS_SECRET_KEY}
         cloudflare_email: ${CLOUDFLARE_EMAIL}
         cloudflare_key: ${CLOUDFLARE_KEY}
         cloudflare_domain: ${CLOUDFLARE_DOMAIN}
-        cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAIN}
+        cloudflare_subdomains: ${CLOUDFLARE_SUBDOMAINS}
     container_name: cron_container
     networks:
       - ipv4_net
@@ -253,7 +263,7 @@ services:
     environment:
       - TZ=Europe/Zurich
     volumes:
-      - ${JELLYFIN_CONFIG_DIR}:/config
+      - jellyfin_config:/config
       - owncloud_webdav:/media
     devices:
       # Specific to RPi4B
@@ -276,3 +286,5 @@ services:
       - /dev/media2:/dev/media2
       - /dev/media3:/dev/media3
     restart: "unless-stopped"
+    labels:
+      - "traefik.enable=false"

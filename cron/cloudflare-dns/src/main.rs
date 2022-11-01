@@ -28,8 +28,8 @@ async fn main() {
         .expect("could not find environment variable CLOUDFLARE_DOMAIN");
 
     //#Subdomain(s) to update to new IP
-    let subdomains = [dotenv::var("CLOUDFLARE_SUBDOMAINS")
-        .expect("could not find environment variable CLOUDFLARE_SUBDOMAINS")];
+    let subdomains = dotenv::var("CLOUDFLARE_SUBDOMAINS")
+        .expect("could not find environment variable CLOUDFLARE_SUBDOMAINS");
 
     // Cloudflare login email
     let email: EmailAddress = dotenv::var("CLOUDFLARE_EMAIL")
@@ -46,7 +46,7 @@ async fn main() {
     let new_ip = cf_utils::get_ipv4().await.unwrap();
     let zone_id = client.get_zone_id(domain.as_str()).await.unwrap();
 
-    for subdomain in subdomains {
+    for subdomain in subdomains.split(",") {
         let full_domain = format!("{}.{}", subdomain, domain);
         let old_dns_record = client
             .get_dns_record(full_domain.as_str(), zone_id.as_str())

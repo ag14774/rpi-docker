@@ -1,4 +1,8 @@
+.vscode
+venv
+.python-version
 .env
+config.json
 traefik/acme.json
 pihole/etc-pihole
 pihole/etc-dnsmasq.d
