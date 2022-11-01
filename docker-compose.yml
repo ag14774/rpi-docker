@@ -118,15 +118,22 @@ services:
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
     labels:
+      # Set up https remote router
       - "traefik.http.routers.owncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
       - "traefik.http.routers.owncloud.entrypoints=websecure"
       - "traefik.http.routers.owncloud.tls=true"
       - "traefik.http.routers.owncloud.tls.certresolver=le"
+
+      # Set up middleware for redirecting http requests to https
       - "traefik.http.middlewares.httptohttps.redirectscheme.scheme=https"
       - "traefik.http.middlewares.httptohttps.redirectscheme.permanent=true"
+
+      # Set up http remote router and configure it to use the redirect to https middleware
       - "traefik.http.routers.httpowncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
       - "traefik.http.routers.httpowncloud.entrypoints=web"
       - "traefik.http.routers.httpowncloud.middlewares=httptohttps@docker"
+
+      # Set up local http router
       - "traefik.http.routers.localowncloud.rule=Host(`owncloud.local`)"
       - "traefik.http.routers.localowncloud.entrypoints=web"
       - "traefik.enable=true"
@@ -240,7 +247,9 @@ services:
       - './pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
     restart: unless-stopped
     labels:
-      - "traefik.enable=false"
+      - "traefik.http.routers.localpihole.rule=Host(`pihole.local`)"
+      - "traefik.http.routers.localpihole.entrypoints=web"
+      - "traefik.enable=true"
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
 
@@ -287,4 +296,6 @@ services:
       - /dev/media3:/dev/media3
     restart: "unless-stopped"
     labels:
-      - "traefik.enable=false"
+      - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.local`)"
+      - "traefik.http.routers.localjellyfin.entrypoints=web"
+      - "traefik.enable=true"
