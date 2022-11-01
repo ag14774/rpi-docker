@@ -98,10 +98,6 @@ services:
     networks:
       - ipv4_net
     restart: always
-    # Forward 8080 port to allow for local access as well. Comment out
-    # if you only want access via the reverse proxy
-    ports:
-      - 8080:8080
     depends_on:
       - mariadb
       - redis
@@ -118,25 +114,26 @@ services:
       - OWNCLOUD_MYSQL_UTF8MB4=true
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
+    ports:
+      - 8080:8080
     labels:
       # Set up https remote router
       - "traefik.http.routers.owncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
       - "traefik.http.routers.owncloud.entrypoints=websecure"
       - "traefik.http.routers.owncloud.tls=true"
       - "traefik.http.routers.owncloud.tls.certresolver=le"
-
       # Set up middleware for redirecting http requests to https
       - "traefik.http.middlewares.httptohttps.redirectscheme.scheme=https"
       - "traefik.http.middlewares.httptohttps.redirectscheme.permanent=true"
-
       # Set up http remote router and configure it to use the redirect to https middleware
       - "traefik.http.routers.httpowncloud.rule=${OWNCLOUD_TRAEFIK_RULE}"
       - "traefik.http.routers.httpowncloud.entrypoints=web"
       - "traefik.http.routers.httpowncloud.middlewares=httptohttps@docker"
-
       # Set up local http router
       - "traefik.http.routers.localowncloud.rule=Host(`owncloud.local`)"
       - "traefik.http.routers.localowncloud.entrypoints=web"
+      # Set port
+      - "traefik.http.services.owncloud.loadbalancer.server.port=8080"
       - "traefik.enable=true"
     healthcheck:
       test: [ "CMD", "/usr/bin/healthcheck" ]
@@ -230,7 +227,6 @@ services:
       - "${LOCAL_IPV4}:53:53/udp"
       - "[${LOCAL_IPV6}]:53:53/tcp"
       - "[${LOCAL_IPV6}]:53:53/udp"
-      - "8081:80/tcp"
     environment:
       TZ: 'Europe/Zurich'
       WEBPASSWORD: ${PIHOLE_PASSWORD}
@@ -254,6 +250,7 @@ services:
       - "traefik.http.routers.localpihole.rule=Host(`pihole.local`)"
       - "traefik.http.routers.localpihole.entrypoints=web"
       - "traefik.http.routers.localpihole.middlewares=localpiholeadmin@docker"
+      # Port 80 is open inside the container
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
       - "traefik.enable=true"
     sysctls:
@@ -271,7 +268,6 @@ services:
     networks:
       - ipv4_net
     ports:
-      - 8096:8096
       - 8920:8920 #optional
       - 7359:7359/udp #optional
       - 1900:1900/udp #optional
@@ -304,7 +300,7 @@ services:
     labels:
       - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.local`)"
       - "traefik.http.routers.localjellyfin.entrypoints=web"
-      # The port is different than 80, so we need to specify which port the service is running
+      # Jellyfin dashboard is running on port 8096
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       - "traefik.enable=true"
 
@@ -322,6 +318,6 @@ services:
     labels:
       - "traefik.http.routers.localglances.rule=Host(`glances.local`)"
       - "traefik.http.routers.localglances.entrypoints=web"
-      # The port is different than 80, so we need to specify which port the service is running
+      # Glances port is 61208
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
       - "traefik.enable=true"
