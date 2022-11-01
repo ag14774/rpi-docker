@@ -307,3 +307,21 @@ services:
       # The port is different than 80, so we need to specify which port the service is running
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       - "traefik.enable=true"
+
+  glances:
+    image: nicolargo/glances:alpine-latest-full
+    container_name: glances
+    networks:
+      - ipv4_net
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - "GLANCES_OPT=-w"
+    restart: "unless-stopped"
+    labels:
+      - "traefik.http.routers.localglances.rule=Host(`glances.local`)"
+      - "traefik.http.routers.localglances.entrypoints=web"
+      # The port is different than 80, so we need to specify which port the service is running
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=61208"
+      - "traefik.enable=true"
