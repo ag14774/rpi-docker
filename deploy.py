@@ -860,8 +860,8 @@ def main():
     time.sleep(5)
 
     logger.info("Checking if WebDAV jellyfin user exists in OwnCloud...")
-    if check_owncloud_user_exists(config.jellyfin.webdav_user):
-        logger.warning("No OwnCloud user %s was found...creating...")
+    if not check_owncloud_user_exists(config.jellyfin.webdav_user):
+        logger.warning("No OwnCloud user %s was found...creating...", config.jellyfin.webdav_user)
         add_owncloud_user(config.jellyfin.webdav_user, config.jellyfin.webdav_pass)
 
     logger.info("Starting docker containers...(Stage 2)")
