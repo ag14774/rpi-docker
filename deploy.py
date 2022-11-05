@@ -606,6 +606,7 @@ def generate_dotenv(config: Config):
     env["LOCAL_BACKUP_PATH"] = str(config.paths.backup_dir)
 
     env["OWNCLOUD_VERSION"] = str(config.owncloud.version)
+    env["OWNCLOUD_TRUSTED_DOMAINS"] = ",".join([config.network.ipv4_host, "owncloud.home", config.owncloud.domain])
     env["ADMIN_USERNAME"] = str(config.owncloud.username)
     env["ADMIN_PASSWORD"] = str(config.owncloud.password)
     owncloud_traefik_rule = f"Host(`{config.owncloud.domain}`)"
