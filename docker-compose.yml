@@ -130,7 +130,7 @@ services:
       - "traefik.http.routers.httpowncloud.entrypoints=web"
       - "traefik.http.routers.httpowncloud.middlewares=httptohttps@docker"
       # Set up local http router
-      - "traefik.http.routers.localowncloud.rule=Host(`owncloud.local`)"
+      - "traefik.http.routers.localowncloud.rule=Host(`owncloud.home`)"
       - "traefik.http.routers.localowncloud.entrypoints=web"
       # Set port
       - "traefik.http.services.owncloud.loadbalancer.server.port=8080"
@@ -244,10 +244,11 @@ services:
       - './pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
     restart: unless-stopped
     labels:
-      - "traefik.http.middlewares.localpiholeadmin.redirectregex.regex=^(http://)?pihole\\.local/?$$"
-      - "traefik.http.middlewares.localpiholeadmin.redirectregex.replacement=$${1}pihole.local/admin"
+      # Redirect pihole.home to pihole.home/admin
+      - "traefik.http.middlewares.localpiholeadmin.redirectregex.regex=^(http://)?pihole\\.home/?$$"
+      - "traefik.http.middlewares.localpiholeadmin.redirectregex.replacement=$${1}pihole.home/admin"
       - "traefik.http.middlewares.localpiholeadmin.redirectregex.permanent=true"
-      - "traefik.http.routers.localpihole.rule=Host(`pihole.local`)"
+      - "traefik.http.routers.localpihole.rule=Host(`pihole.home`)"
       - "traefik.http.routers.localpihole.entrypoints=web"
       - "traefik.http.routers.localpihole.middlewares=localpiholeadmin@docker"
       # Port 80 is open inside the container
@@ -298,7 +299,7 @@ services:
       - /dev/media3:/dev/media3
     restart: "unless-stopped"
     labels:
-      - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.local`)"
+      - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.home`)"
       - "traefik.http.routers.localjellyfin.entrypoints=web"
       # Jellyfin dashboard is running on port 8096
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
@@ -316,7 +317,7 @@ services:
       - "GLANCES_OPT=-w"
     restart: "unless-stopped"
     labels:
-      - "traefik.http.routers.localglances.rule=Host(`glances.local`)"
+      - "traefik.http.routers.localglances.rule=Host(`glances.home`)"
       - "traefik.http.routers.localglances.entrypoints=web"
       # Glances port is 61208
       - "traefik.http.services.glances.loadbalancer.server.port=61208"

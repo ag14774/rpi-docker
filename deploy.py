@@ -662,12 +662,12 @@ def generate_pihole_config(config: Config):
         custom_dns.extend([tuple(entry.split(" ", 1)) for entry in existing_dns_text])
     custom_dns.extend(
         [
-            (config.network.ipv4_host, "rpi.local"),
-            (config.network.ipv4_host, "owncloud.local"),
-            (config.network.ipv4_host, "pihole.local"),
-            (config.network.ipv4_host, "jellyfin.local"),
-            (config.network.ipv4_host, "glances.local"),
-            (config.network.ipv4_gateway, "router.local"),
+            (config.network.ipv4_host, "rpi.home"),
+            (config.network.ipv4_host, "owncloud.home"),
+            (config.network.ipv4_host, "pihole.home"),
+            (config.network.ipv4_host, "jellyfin.home"),
+            (config.network.ipv4_host, "glances.home"),
+            (config.network.ipv4_gateway, "router.home"),
         ]
     )
     custom_dns = list(set(custom_dns))
