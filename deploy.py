@@ -741,9 +741,6 @@ def check_rclone_plugin() -> bool:
 
 @run_as_root
 def install_rclone_plugin():
-    # sudo mkdir -p /var/lib/docker-plugins/rclone/config
-    # sudo mkdir -p /var/lib/docker-plugins/rclone/cache
-    # docker plugin install rclone/docker-volume-rclone:arm64 args="-v" --alias rclone --grant-all-permissions
     config_path = Path("/var/lib/docker-plugins/rclone/config")
     config_path.mkdir(exist_ok=True, parents=True)
     cache_path = Path("/var/lib/docker-plugins/rclone/cache")
