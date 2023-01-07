@@ -32,7 +32,7 @@ COPY cron/cloudflare-dns/build/bin/cf_dyndns /bin/cf_dyndns
 RUN chmod +x /bin/cf_dyndns
 
 ADD cron/run_hourly/ /etc/periodic/hourly/
-RUN chmod +x /etc/periodic/hourly/*
+RUN chmod +x /etc/periodic/hourly/* || true
 
 RUN touch /var/log/cron.log
 RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
