@@ -8,13 +8,18 @@ use std::net::IpAddr;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
+fn format_error(msg: &str, details: &impl fmt::Display) -> String {
+    format!("{}:\n{}", msg, details.to_string())
+}
+
 pub mod utils {
+    use crate::format_error;
     #[cfg(test)]
     use mockito;
     use reqwest::ClientBuilder;
     use std::net::{IpAddr, Ipv4Addr};
 
-    pub async fn get_ipv4() -> Result<Ipv4Addr, &'static str> {
+    pub async fn get_ipv4() -> Result<Ipv4Addr, String> {
         let client = ClientBuilder::new()
             .user_agent(super::APP_USER_AGENT)
             .local_address(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
@@ -33,13 +38,15 @@ pub mod utils {
             .await
             .map_err(|_| -> &'static str { "cannot get current IPv4" })?;
 
-        response
+        let response = response
             .text()
             .await
-            .expect("could not convert response to text")
+            .expect("could not convert response to text");
+
+        response
             .trim()
             .parse::<Ipv4Addr>()
-            .map_err(|_| "could not parse response to IPv4 address")
+            .map_err(|_| format_error("could not parse response to IPv4 address", &response))
     }
 }
 
@@ -85,7 +92,7 @@ impl CFClient {
         Self::from_iter(headers.into_iter())
     }
 
-    pub async fn get_zone_id(&self, domain: impl fmt::Display) -> Result<String, &'static str> {
+    pub async fn get_zone_id(&self, domain: impl fmt::Display) -> Result<String, String> {
         let url = format!("https://api.cloudflare.com/client/v4/zones?name={}&status=active&page=1&per_page=20&order=status&direction=desc&match=all", domain);
 
         let request = self
@@ -106,7 +113,12 @@ impl CFClient {
 
         response
             .pointer("/result/0/id")
-            .ok_or("response had unexpected format while getting Zone ID")
+            .ok_or_else(|| {
+                format_error(
+                    "response had unexpected format while getting Zone ID",
+                    &response,
+                )
+            })
             .map(|o| o.to_string())
     }
 
@@ -114,7 +126,7 @@ impl CFClient {
         &self,
         full_domain: impl fmt::Display,
         zone_id: impl fmt::Display,
-    ) -> Result<DNSRecord, &'static str> {
+    ) -> Result<DNSRecord, String> {
         let url = format!("https://api.cloudflare.com/client/v4/zones/{}/dns_records?type=A&name={}&page=1&per_page=20&order=type&direction=desc&match=all", zone_id, full_domain);
 
         let request = self
@@ -128,19 +140,29 @@ impl CFClient {
             .client
             .execute(request)
             .await
-            .map_err(|_| "cannot get DNS record")?
+            .map_err(|_| String::from("cannot get DNS record"))?
             .json::<serde_json::Value>()
             .await
-            .map_err(|_| "response is not valid json")?;
+            .map_err(|_| String::from("response is not valid json"))?;
 
         let dns_id = response
             .pointer("/result/0/id")
-            .ok_or("response had unexpected format while getting DNS ID")
+            .ok_or_else(|| {
+                format_error(
+                    "response had unexpected format while getting DNS ID:\n{}",
+                    &response,
+                )
+            })
             .map(|o| o.to_string())?;
 
         let ip: IpAddr = response
             .pointer("/result/0/content")
-            .ok_or("response had unexpected format while getting IP of DNS record")
+            .ok_or_else(|| {
+                format_error(
+                    "response had unexpected format while getting IP of DNS record",
+                    &response,
+                )
+            })
             .map(|o| o.to_string())?
             .parse()
             .map_err(|_| "cannot parse data into IP address - is this a type A record?")?;
@@ -153,7 +175,7 @@ impl CFClient {
         })
     }
 
-    pub async fn update_dns_record(&self, record: &DNSRecord) -> Result<bool, &'static str> {
+    pub async fn update_dns_record(&self, record: &DNSRecord) -> Result<bool, String> {
         let url = format!(
             "https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}",
             record.zone_id, record.dns_id
@@ -172,12 +194,14 @@ impl CFClient {
         self.client
             .execute(request)
             .await
-            .map_err(|_| "cannot update DNS record")?
+            .map_err(|_| String::from("cannot update DNS record"))?
             .json::<serde_json::Value>()
             .await
-            .map_err(|_| "response is not valid json")?
+            .map_err(|_| String::from("response is not valid json"))?
             .pointer("/success")
-            .ok_or("response had unexpected format while updating DNS ID")
+            .ok_or(String::from(
+                "response had unexpected format while updating DNS ID",
+            ))
             .map(|v| {
                 v.as_bool()
                     .expect("response could not be converted to bool")
