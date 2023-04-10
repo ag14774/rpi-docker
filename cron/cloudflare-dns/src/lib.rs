@@ -119,7 +119,11 @@ impl CFClient {
                     &response,
                 )
             })
-            .map(|o| o.to_string())
+            .map(|o| {
+                o.as_str()
+                    .expect("cannot convert Zone ID to text")
+                    .to_string()
+            })
     }
 
     pub async fn get_dns_record(
@@ -153,7 +157,11 @@ impl CFClient {
                     &response,
                 )
             })
-            .map(|o| o.to_string())?;
+            .map(|o| {
+                o.as_str()
+                    .expect("cannot convert DNS ID to text")
+                    .to_string()
+            })?;
 
         let ip: IpAddr = response
             .pointer("/result/0/content")
@@ -163,7 +171,11 @@ impl CFClient {
                     &response,
                 )
             })
-            .map(|o| o.to_string())?
+            .map(|o| {
+                o.as_str()
+                    .expect("cannot convert IP address field to text")
+                    .to_string()
+            })?
             .parse()
             .map_err(|_| "cannot parse data into IP address - is this a type A record?")?;
 

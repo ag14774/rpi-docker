@@ -1,7 +1,7 @@
 use cf_client::{utils as cf_utils, CFClient, DNSRecord};
 use clap::{Parser, ValueHint};
 use email_address::EmailAddress;
-use log::info;
+use log::{debug, info};
 use std::net::IpAddr;
 use std::path::PathBuf;
 
@@ -47,6 +47,7 @@ async fn main() {
 
     let new_ip = cf_utils::get_ipv4().await.unwrap();
     let zone_id = client.get_zone_id(domain.as_str()).await.unwrap();
+    debug!("Zone ID found: {}", zone_id);
 
     for subdomain in subdomains.split(',') {
         let full_domain = format!("{}.{}", subdomain, domain);
