@@ -1,6 +1,6 @@
 [package]
 name = "cloudflare_dyndns"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andreas Georgiou <me@ageorgiou.com>"]
 edition = "2021"
 

@@ -56,7 +56,7 @@ async fn main() {
             .await
             .unwrap();
 
-        if new_ip == old_dns_record.ip {
+        if new_ip != old_dns_record.ip {
             info!("Updating IP from {} to {}", old_dns_record.ip, new_ip);
 
             let new_dns_record = DNSRecord {
