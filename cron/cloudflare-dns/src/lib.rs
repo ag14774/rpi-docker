@@ -9,7 +9,7 @@ use std::net::IpAddr;
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 fn format_error(msg: &str, details: &impl fmt::Display) -> String {
-    format!("{}:\n{}", msg, details.to_string())
+    format!("{}:\n{}", msg, details)
 }
 
 pub mod utils {
@@ -191,21 +191,18 @@ impl CFClient {
             .build()
             .expect("could not build request to update DNS record");
 
-        self.client
+        Ok(self
+            .client
             .execute(request)
             .await
-            .map_err(|_| String::from("cannot update DNS record"))?
+            .map_err(|_| "cannot update DNS record")?
             .json::<serde_json::Value>()
             .await
-            .map_err(|_| String::from("response is not valid json"))?
+            .map_err(|_| "response is not valid json")?
             .pointer("/success")
-            .ok_or(String::from(
-                "response had unexpected format while updating DNS ID",
-            ))
-            .map(|v| {
-                v.as_bool()
-                    .expect("response could not be converted to bool")
-            })
+            .ok_or("response had unexpected format while updating DNS ID")?
+            .as_bool()
+            .expect("response could not be converted to bool"))
     }
 }
 

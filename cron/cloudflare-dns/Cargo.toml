@@ -10,6 +10,7 @@ edition = "2021"
 clap = { version = "3.2.23", features = ["derive"] }
 dotenv = "0.15.0"
 email_address = "0.2.4"
+env_logger = "0.10.0"
 log = "0.4.17"
 openssl = { version="0.10.50", features=["vendored"] }
 reqwest = { version="0.11.16", features=["json"] }
