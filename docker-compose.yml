@@ -350,6 +350,8 @@ services:
   homepage:
     image: ghcr.io/benphelps/homepage:latest
     container_name: homepage
+    networks:
+      - ipv4_net
     restart: always
     volumes:
       - ./homepage/config:/app/config # Make sure your local config directory exists
