@@ -10,7 +10,7 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
-RUN apk update && apk upgrade && apk add duplicity py3-pip jq curl openssh
+RUN apk update && apk upgrade && apk add duplicity py3-pip jq curl openssh rsync
 RUN pip3 install boto3
 
 COPY general/dotenv_writer/build/bin/dotenv_writer /bin/dotenv_writer
@@ -35,8 +35,12 @@ RUN chmod +x /bin/cf_dyndns
 ADD cron/run_hourly/ /etc/periodic/hourly/
 RUN chmod +x /etc/periodic/hourly/* || true
 
+ADD cron/backups /backups
+RUN chmod +x /backups/* || true
+
 RUN touch /var/log/cron.log
-RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
+RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /backups/backup_jellyfin.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
+RUN (crontab -l 2>/dev/null; echo "10 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 RUN (crontab -l 2>/dev/null; echo "*/30 * * * * RUST_LOG=info cf_dyndns --dotenv-dir / > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 
 CMD ["crond", "-f"]

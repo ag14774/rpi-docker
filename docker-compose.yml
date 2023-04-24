@@ -238,6 +238,7 @@ services:
     labels:
       - "traefik.enable=false"
     volumes:
+      - jellyfin_config:/mnt/jellyfin_config:ro
       - backup:/mnt/backup
 
   pihole:
@@ -300,7 +301,6 @@ services:
     volumes:
       - jellyfin_config:/config
       - owncloud_webdav:/media
-      - backup:/mnt/backup
     devices:
       # Specific to RPi4B
       - /dev/video10:/dev/video10
