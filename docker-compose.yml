@@ -70,7 +70,7 @@ services:
   socket-proxy:
     image: tecnativa/docker-socket-proxy
     container_name: socket-proxy
-    restart: unless-stopped
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -266,7 +266,7 @@ services:
     volumes:
       - './pihole/etc-pihole:/etc/pihole'
       - './pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
-    restart: unless-stopped
+    restart: always
     labels:
       # Redirect pihole.home to pihole.home/admin
       - "traefik.http.middlewares.localpiholeadmin.redirectregex.regex=^(http://)?pihole\\.home/?$$"
@@ -321,7 +321,7 @@ services:
       - /dev/media1:/dev/media1
       - /dev/media2:/dev/media2
       - /dev/media3:/dev/media3
-    restart: "unless-stopped"
+    restart: always
     labels:
       - "traefik.http.routers.localjellyfin.rule=Host(`jellyfin.home`)"
       - "traefik.http.routers.localjellyfin.entrypoints=web"
@@ -339,10 +339,24 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - "GLANCES_OPT=-w"
-    restart: "unless-stopped"
+    restart: always
     labels:
       - "traefik.http.routers.localglances.rule=Host(`glances.home`)"
       - "traefik.http.routers.localglances.entrypoints=web"
       # Glances port is 61208
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
+      - "traefik.enable=true"
+
+  homepage:
+    image: ghcr.io/benphelps/homepage:latest
+    container_name: homepage
+    restart: always
+    volumes:
+      - ./homepage/config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
+    labels:
+      - "traefik.http.routers.localglances.rule=Host(`welcome.home`)"
+      - "traefik.http.routers.localglances.entrypoints=web"
+      # Homepage port is 3000
+      - "traefik.http.services.glances.loadbalancer.server.port=3000"
       - "traefik.enable=true"

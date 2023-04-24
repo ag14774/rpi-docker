@@ -668,6 +668,7 @@ def generate_pihole_config(config: Config):
             (config.network.ipv4_host, "pihole.home"),
             (config.network.ipv4_host, "jellyfin.home"),
             (config.network.ipv4_host, "glances.home"),
+            (config.network.ipv4_host, "welcome.home"),
             (config.network.ipv4_gateway, "router.home"),
         ]
     )
