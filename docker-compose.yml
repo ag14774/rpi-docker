@@ -355,8 +355,8 @@ services:
       - ./homepage/config:/app/config # Make sure your local config directory exists
       - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
     labels:
-      - "traefik.http.routers.localglances.rule=Host(`welcome.home`)"
-      - "traefik.http.routers.localglances.entrypoints=web"
+      - "traefik.http.routers.localhomepage.rule=Host(`welcome.home`)"
+      - "traefik.http.routers.localhomepage.entrypoints=web"
       # Homepage port is 3000
-      - "traefik.http.services.glances.loadbalancer.server.port=3000"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
       - "traefik.enable=true"
