@@ -352,6 +352,7 @@ services:
     container_name: homepage
     networks:
       - ipv4_net
+      - proxy_net
     restart: always
     volumes:
       - ./homepage/config:/app/config # Make sure your local config directory exists
