@@ -1,0 +1,23 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/widgets
+
+- resources:
+    label: System
+    cpu: true
+    cputemp: true
+    memory: true
+
+- search:
+    provider: google
+    focus: true
+    target: _blank
+
+- openmeteo:
+    label: Zurich # optional
+    latitude: 47.36667
+    longitude: 8.55
+    timezone: Europe/Zurich # optional
+    units: metric # or imperial
+    cache: 5 # Time in minutes to cache API responses, to stay within limits
+

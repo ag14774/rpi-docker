@@ -334,11 +334,13 @@ services:
     container_name: glances
     networks:
       - ipv4_net
+      - proxy_net
     pid: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+    #     volumes:
+    #       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - "GLANCES_OPT=-w"
+      - DOCKER_HOST=tcp://socket-proxy:2375
     restart: always
     labels:
       - "traefik.http.routers.localglances.rule=Host(`glances.home`)"
@@ -352,11 +354,10 @@ services:
     container_name: homepage
     networks:
       - ipv4_net
-      - proxy_net
+      - proxy_net # for docker integrations
     restart: always
     volumes:
       - ./homepage/config:/app/config # Make sure your local config directory exists
-      - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
     labels:
       - "traefik.http.routers.localhomepage.rule=Host(`welcome.home`)"
       - "traefik.http.routers.localhomepage.entrypoints=web"

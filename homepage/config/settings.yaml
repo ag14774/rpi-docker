@@ -1,0 +1,15 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/settings
+
+title: Welcome Home!
+headerStyle: boxed
+color: slate
+providers:
+  openweathermap: openweathermapapikey
+  weatherapi: weatherapiapikey
+layout:
+  Apps:
+    icon: mdi-apps
+    style: row
+    columns: 2

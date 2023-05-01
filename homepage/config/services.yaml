@@ -1,13 +1,29 @@
-- Group A:
-    - Service A:
-        href: http://localhost/
+- Apps:
+    - Owncloud:
+        icon: owncloud
+        href: http://owncloud.home/
+        description: Private and secure storage for your files
+        server: my-docker
+        container: owncloud_server
 
-    - Service B:
-        href: http://localhost/
+    - Jellyfin:
+        icon: jellyfin
+        href: http://jellyfin.home/
+        description: Watch movies on-demand
+        server: my-docker
+        container: jellyfin
 
-    - Service C:
-        href: http://localhost/
+    - Pihole:
+        icon: pi-hole
+        href: http://pihole.home/
+        description: Network-wide ad-blocking service
+        server: my-docker
+        container: pihole
 
-- Group B:
-    - Service D:
-        href: http://localhost/
+    - Glances:
+        icon: glances
+        href: http://glances.home/
+        description: A quick glance at the system's health and performance
+        server: my-docker
+        container: glances
+

@@ -1,0 +1,19 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/en/configs/bookmarks
+
+- Social:
+    - Reddit:
+        - abbr: RE
+          icon: reddit
+          href: https://reddit.com/
+    - Twitter:
+        - abbr: TW
+          icon: twitter
+          href: https://twitter.com/
+
+- Entertainment:
+    - YouTube:
+        - abbr: YT
+          icon: youtube
+          href: https://youtube.com/
