@@ -366,6 +366,7 @@ services:
 
   ocis:
     image: ${OCIS_DOCKER_IMAGE:-owncloud/ocis}:${OCIS_DOCKER_TAG:-latest}
+    container_name: ocis
     networks:
       - ipv4_net
     entrypoint:
@@ -419,6 +420,7 @@ services:
       - ${OCIS_DATA_DIR}:/var/lib/ocis
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.ocis.tls=true"
       - "traefik.http.routers.ocis.entrypoints=websecure"
       - "traefik.http.routers.ocis.rule=Host(`${OCIS_DOMAIN:-ocis.owncloud.test}`)"
       - "traefik.http.routers.ocis.tls.certresolver=le"
