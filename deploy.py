@@ -29,7 +29,6 @@ from typing import Any, Callable, Dict, List, Optional, TextIO, Tuple, Type, Typ
 
 
 class ColoredFormatter(logging.Formatter):
-
     MAPPING = {
         "DEBUG": 37,  # white
         "INFO": 36,  # cyan
@@ -47,7 +46,9 @@ class ColoredFormatter(logging.Formatter):
         colored_record = copy.copy(record)
         levelname = colored_record.levelname
         seq = self.MAPPING.get(levelname, 37)  # default white
-        colored_levelname = ("{0}{1}m{2}{3}").format(self.PREFIX, seq, levelname, self.SUFFIX)
+        colored_levelname = ("{0}{1}m{2}{3}").format(
+            self.PREFIX, seq, levelname, self.SUFFIX
+        )
         colored_record.levelname = colored_levelname
         return super().format(colored_record)
 
@@ -85,7 +86,11 @@ class JSONDataclass:
         field_types = {field.name: field.type for field in fields(cls)}
         for field_name, field_type in field_types.items():
             # TODO: fix for field types that are typing.List, Unions etc
-            if isinstance(field_type, type) and issubclass(field_type, JSONDataclass) and field_name in dct:
+            if (
+                isinstance(field_type, type)
+                and issubclass(field_type, JSONDataclass)
+                and field_name in dct
+            ):
                 assert is_dataclass(field_type)
                 dct[field_name] = field_type.from_dict(dct[field_name])
 
@@ -164,10 +169,14 @@ class JellyfinConfig(JSONDataclass):
             try:
                 stat_info = os.stat(video_dev)
                 gid = stat_info.st_gid
-                logger.info(f"Video GID is not set..automatically setting it to {gid}...")
+                logger.info(
+                    f"Video GID is not set..automatically setting it to {gid}..."
+                )
                 self.host_video_gid = gid
             except Exception as e:
-                raise RuntimeError("Could not detect video GID...Use the host_video_gid argument...") from e
+                raise RuntimeError(
+                    "Could not detect video GID...Use the host_video_gid argument..."
+                ) from e
 
 
 @dataclass
@@ -210,7 +219,9 @@ def hex_to_ip_address(hex_str: str) -> IPv4Address | IPv6Address:
     if len(hex_str) == 8:
         return IPv4Address(socket.inet_ntoa(struct.pack("<L", int(hex_str, 16))))
     else:
-        return IPv6Address(socket.inet_ntop(socket.AF_INET6, int(hex_str, 16).to_bytes(16, "big")))
+        return IPv6Address(
+            socket.inet_ntop(socket.AF_INET6, int(hex_str, 16).to_bytes(16, "big"))
+        )
 
 
 def hex_to_ipv4_address(hex_str: str) -> IPv4Address:
@@ -346,7 +357,10 @@ def get_ipv6_gateway(
     with route_file.open("r") as fh:
         for line in fh:
             entry = REntry(*line.strip().split())
-            if entry.dest != "00000000000000000000000000000000" or not int(entry.flags, 16) & RTF_GATEWAY_MASK:
+            if (
+                entry.dest != "00000000000000000000000000000000"
+                or not int(entry.flags, 16) & RTF_GATEWAY_MASK
+            ):
                 # If not default route or not RTF_GATEWAY, skip it
                 continue
             try:
@@ -363,7 +377,9 @@ def get_ipv6_gateway(
             entries.append(entry)
 
     if not entries:
-        raise RuntimeError("Could not find any relevant entries in /proc/net/ipv6_route")
+        raise RuntimeError(
+            "Could not find any relevant entries in /proc/net/ipv6_route"
+        )
 
     entry = min(entries, key=lambda x: int(x.metric))
     return entry.iface, hex_to_ipv6_address(entry.next_hop)
@@ -371,11 +387,21 @@ def get_ipv6_gateway(
 
 def complete_network_config(nconfig: NetworkConfig) -> NetworkConfig:
     iface = nconfig.iface_name
-    ipv4_host = IPv4Address(nconfig.ipv4_host) if nconfig.ipv4_host is not None else None
-    ipv4_gateway = IPv4Address(nconfig.ipv4_gateway) if nconfig.ipv4_gateway is not None else None
-    ipv4_subnet = IPv4Network(nconfig.ipv4_subnet) if nconfig.ipv4_subnet is not None else None
-    ipv6_host = IPv6Address(nconfig.ipv6_host) if nconfig.ipv6_host is not None else None
-    ipv6_gateway = IPv6Address(nconfig.ipv6_gateway) if nconfig.ipv6_gateway is not None else None
+    ipv4_host = (
+        IPv4Address(nconfig.ipv4_host) if nconfig.ipv4_host is not None else None
+    )
+    ipv4_gateway = (
+        IPv4Address(nconfig.ipv4_gateway) if nconfig.ipv4_gateway is not None else None
+    )
+    ipv4_subnet = (
+        IPv4Network(nconfig.ipv4_subnet) if nconfig.ipv4_subnet is not None else None
+    )
+    ipv6_host = (
+        IPv6Address(nconfig.ipv6_host) if nconfig.ipv6_host is not None else None
+    )
+    ipv6_gateway = (
+        IPv6Address(nconfig.ipv6_gateway) if nconfig.ipv6_gateway is not None else None
+    )
 
     # Find iface and gateways
     if iface is None or ipv4_gateway is None:
@@ -441,7 +467,7 @@ class Config(JSONDataclass):
     duplicity: DuplicityConfig
     pihole: PiHoleConfig
     jellyfin: JellyfinConfig
-    network: NetworkConfig = NetworkConfig()
+    network: NetworkConfig = field(default_factory=NetworkConfig)
 
     def __post_init__(self):
         logger.info("Detecting network settings...")
@@ -495,13 +521,17 @@ def check_docker_ipv6() -> bool:
         logger.warning("The flag `ipv6` is not set to true in docker daemon.json")
         return False
     if docker_config.get("experimental") is not True:
-        logger.warning("The flag `experimental` is not set to true in docker daemon.json")
+        logger.warning(
+            "The flag `experimental` is not set to true in docker daemon.json"
+        )
         return False
     if docker_config.get("ip6tables") is not True:
         logger.warning("The flag `ip6tables` is not set to true in docker daemon.json")
         return False
     if docker_config.get("fixed-cidr-v6") is None:
-        logger.warning("The setting `fixed-cidr-v6` could not be found or is set to null")
+        logger.warning(
+            "The setting `fixed-cidr-v6` could not be found or is set to null"
+        )
         return False
 
     try:
@@ -511,7 +541,9 @@ def check_docker_ipv6() -> bool:
         return False
 
     if not ipv6_address.subnet_of(IPv6Network("fd00::/8")):
-        logger.warning("Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses")
+        logger.warning(
+            "Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses"
+        )
         return False
 
     return True
@@ -553,12 +585,18 @@ def get_rust_target() -> str:
         return target
 
     try:
-        process = subprocess.run(["rustup", "default"], check=True, text=True, capture_output=True)
+        process = subprocess.run(
+            ["rustup", "default"], check=True, text=True, capture_output=True
+        )
         target = process.stdout.strip().split(" ")[0].split("-", 1)[1]
         return target
     except Exception as e:
         if os.getuid() == 0 and (username := os.environ.get("SUDO_USER")) is not None:
-            rustup_settings = (Path("/home") / username / ".rustup" / "settings.toml").read_text().split("\n")
+            rustup_settings = (
+                (Path("/home") / username / ".rustup" / "settings.toml")
+                .read_text()
+                .split("\n")
+            )
             for line in rustup_settings:
                 if line.startswith("default_toolchain"):
                     target = line.split("=")[1].strip('"').split("-", 1)[1]
@@ -587,6 +625,7 @@ def compile_rust_code(project_root: str | Path) -> None:
         f"messense/rust-musl-cross:{docker_tag}",
         "cargo",
         "install",
+        "--locked",
         "--path",
         "/home/rust/src",
         "--root",
@@ -596,7 +635,9 @@ def compile_rust_code(project_root: str | Path) -> None:
 
 
 def rclone_obscure(password: str):
-    p = subprocess.run(["rclone", "obscure", password], check=True, capture_output=True, text=True)
+    p = subprocess.run(
+        ["rclone", "obscure", password], check=True, capture_output=True, text=True
+    )
     return p.stdout.strip()
 
 
@@ -606,13 +647,17 @@ def generate_dotenv(config: Config):
     env["LOCAL_BACKUP_PATH"] = str(config.paths.backup_dir)
 
     env["OWNCLOUD_VERSION"] = str(config.owncloud.version)
-    env["OWNCLOUD_TRUSTED_DOMAINS"] = ",".join([config.network.ipv4_host, "owncloud.home", config.owncloud.domain])
+    env["OWNCLOUD_TRUSTED_DOMAINS"] = ",".join(
+        [config.network.ipv4_host, "owncloud.home", config.owncloud.domain]
+    )
     env["ADMIN_USERNAME"] = str(config.owncloud.username)
     env["ADMIN_PASSWORD"] = str(config.owncloud.password)
     owncloud_traefik_rule = f"Host(`{config.owncloud.domain}`)"
     env["OWNCLOUD_TRAEFIK_RULE"] = owncloud_traefik_rule
 
-    assert len(config.cloudflare.subdomains) >= 1, "Currently at least one subdomain is required"
+    assert (
+        len(config.cloudflare.subdomains) >= 1
+    ), "Currently at least one subdomain is required"
     env["CLOUDFLARE_EMAIL"] = str(config.cloudflare.email)
     env["CLOUDFLARE_KEY"] = str(config.cloudflare.api_key)
     env["CLOUDFLARE_DOMAIN"] = str(config.cloudflare.domain)
@@ -776,7 +821,9 @@ def main():
         action="store_true",
         help="Install the docker rclone plugin if not found (requires root)",
     )
-    parser.add_argument("-y", action="store_true", help="Do not prompt user for confirmation")
+    parser.add_argument(
+        "-y", action="store_true", help="Do not prompt user for confirmation"
+    )
     args = parser.parse_args()
 
     requires_root = False
@@ -786,10 +833,14 @@ def main():
 
     if requires_root:
         if os.getuid() != 0:
-            logger.error("You cannot perform this operation unless you are root. Please rerun with sudo")
+            logger.error(
+                "You cannot perform this operation unless you are root. Please rerun with sudo"
+            )
             return
         if os.getenv("SUDO_UID") is None:
-            logger.error("Could not find env variable SUDO_UID. Are you sure you are running with sudo?")
+            logger.error(
+                "Could not find env variable SUDO_UID. Are you sure you are running with sudo?"
+            )
             return
         os.seteuid(int(os.environ["SUDO_UID"]))
 
@@ -818,7 +869,9 @@ def main():
 
     if not args.y:
         print()
-        input("If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate")
+        input(
+            "If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate"
+        )
 
     logger.info("Checking docker config daemon.json...")
     if not check_docker_ipv6():
@@ -863,7 +916,9 @@ def main():
 
     logger.info("Checking if WebDAV jellyfin user exists in OwnCloud...")
     if not check_owncloud_user_exists(config.jellyfin.webdav_user):
-        logger.warning("No OwnCloud user %s was found...creating...", config.jellyfin.webdav_user)
+        logger.warning(
+            "No OwnCloud user %s was found...creating...", config.jellyfin.webdav_user
+        )
         add_owncloud_user(config.jellyfin.webdav_user, config.jellyfin.webdav_pass)
 
     logger.info("Starting docker containers...(Stage 2)")
