@@ -921,7 +921,7 @@ def main():
     generate_dotenv(config)
 
     logger.info("Starting docker containers...(Stage 1)")
-    subprocess.run(["docker-compose", "up", "-d", "owncloud"], check=True)
+    subprocess.run(["docker-compose", "up", "-d", "ocis"], check=True)
     time.sleep(5)
 
     logger.info("Checking if WebDAV jellyfin user exists in OwnCloud...")
