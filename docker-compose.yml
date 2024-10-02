@@ -242,7 +242,7 @@ services:
         host_video_gid: ${HOST_VIDEO_GID}
     container_name: jellyfin
     depends_on:
-      - owncloud
+      - ocis
     networks:
       - ipv4_net
     ports:
