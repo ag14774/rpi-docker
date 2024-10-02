@@ -4,10 +4,17 @@
     "backup_dir": "/mnt/backup"
   },
   "owncloud": {
-    "version": 10.8,
-    "username": "admin",
+    "docker_image": "owncloud/ocis-rolling",
+    "docker_tag": "latest",
     "password": "admin",
-    "domain": "myowncloud.example.com"
+    "domain": "myowncloud.example.com",
+    "smtp_host": "",
+    "smtp_port": "",
+    "smtp_sender": "",
+    "smtp_username": "",
+    "smtp_password": "",
+    "smtp_authentication": "",
+    "smtp_insecure": false
   },
   "cloudflare": {
     "email": "email@example.com",

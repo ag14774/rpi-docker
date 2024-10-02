@@ -105,10 +105,17 @@ class LocalPaths(JSONDataclass):
 
 @dataclass
 class OwncloudConfig(JSONDataclass):
-    version: str
-    username: str = "admin"
+    docker_image: str = "owncloud/ocis-rolling"
+    docker_tag: str = "latest"
     password: str = "admin"
     domain: Optional[str] = None
+    smtp_host: str = ""
+    smtp_port: str = ""
+    smtp_sender: str = ""
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_authentication: str = ""
+    smtp_insecure: bool = False
 
 
 @dataclass
@@ -646,14 +653,17 @@ def generate_dotenv(config: Config):
     env["DATA_PATH"] = str(config.paths.data_dir)
     env["LOCAL_BACKUP_PATH"] = str(config.paths.backup_dir)
 
-    env["OWNCLOUD_VERSION"] = str(config.owncloud.version)
-    env["OWNCLOUD_TRUSTED_DOMAINS"] = ",".join(
-        [config.network.ipv4_host, "owncloud.home", config.owncloud.domain]
-    )
-    env["ADMIN_USERNAME"] = str(config.owncloud.username)
+    env["OCIS_DOCKER_IMAGE"] = str(config.owncloud.docker_image)
+    env["OCIS_DOCKET_TAG"] = str(config.owncloud.docker_tag)
     env["ADMIN_PASSWORD"] = str(config.owncloud.password)
-    owncloud_traefik_rule = f"Host(`{config.owncloud.domain}`)"
-    env["OWNCLOUD_TRAEFIK_RULE"] = owncloud_traefik_rule
+    env["OCIS_DOMAIN"] = str(config.owncloud.domain)
+    env["SMTP_HOST"] = str(config.owncloud.smtp_host)
+    env["SMTP_PORT"] = str(config.owncloud.smtp_port)
+    env["SMTP_SENDER"] = str(config.owncloud.smtp_sender)
+    env["SMTP_USERNAME"] = str(config.owncloud.smtp_username)
+    env["SMTP_PASSWORD"] = str(config.owncloud.smtp_password)
+    env["SMTP_AUTHENTICATION"] = str(config.owncloud.smtp_authentication)
+    env["SMTP_INSECURE"] = str(config.owncloud.smtp_insecure)
 
     assert (
         len(config.cloudflare.subdomains) >= 1
