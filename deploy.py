@@ -717,7 +717,7 @@ def refresh_access_token(owncloud_domain: str, refresh_token: str) -> str:
         url=url,
         data={
             "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
+            "refresh_token": refresh_token.strip(),
             "redirect_uri": "http://localhost",
             "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
             "client_secret": "UBntmLjC2yYCeHwsyj73Uwo9TAaecAetRwMw0xYcvNL9yRdLSUi0hUAHfvCHFeFh",
@@ -733,8 +733,8 @@ def get_access_and_refresh_token(owncloud_domain: str, auth_code: str) -> tuple[
     r = requests.post(
         url=url,
         data={
-            "grant_type": "refresh_token",
-            "code": auth_code,
+            "grant_type": "authorization_code",
+            "code": auth_code.strip(),
             "redirect_uri": "http://localhost",
             "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
             "client_secret": "UBntmLjC2yYCeHwsyj73Uwo9TAaecAetRwMw0xYcvNL9yRdLSUi0hUAHfvCHFeFh",
@@ -771,7 +771,7 @@ def get_access_token(owncloud_domain: str) -> str:
 
 def check_owncloud_user_exists(user: str, owncloud_domain: str, access_key: str) -> bool:
     url = f"https://{owncloud_domain}/graph/v1.0/users"
-    r = requests.get(url, headers={"Authorization": f"Bearer {access_key}"})
+    r = requests.get(url, headers={"Authorization": f"Bearer {access_key.strip()}"})
     r.raise_for_status()
 
     users = r.json()["value"]
@@ -786,7 +786,7 @@ def add_owncloud_user(user: str, password: str, owncloud_domain: str, access_key
         "onPremisesSamAccountName": user,
         "passwordProfile": {"password": password},
     }
-    r = requests.post(url, json=data, headers={"Authorization": f"Bearer {access_key}"})
+    r = requests.post(url, json=data, headers={"Authorization": f"Bearer {access_key.strip()}"})
     r.raise_for_status()
 
 
