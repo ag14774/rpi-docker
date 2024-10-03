@@ -8,3 +8,4 @@ pihole/etc-pihole
 pihole/etc-dnsmasq.d
 cron/run_hourly/lg_devmode.sh
 homepage/config/logs
+.refresh_token

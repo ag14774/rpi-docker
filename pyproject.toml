@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "rpi-deploy"
+version = "0.1.0"
+description = "Deploy docker containers"
+authors = ["Andreas Georgiou"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.32.3"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.8"
+pre-commit = "^3.8.0"
+pre-commit-hooks = "^4.6.0"
+mypy = "^1.11.2"
+types-requests = "^2.32.0.20240914"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+extend-select = [
+    "B",   # flake8-bugbear
+    "C4",  # fkale8-comprehensions
+    "I",   # isort
+    "N",   # pep8-naming
+    "PIE", # fkale8-pie
+    "PGH", # pygrep-hooks
+    "RUF", # ruff checks
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "UP",  # pyupgrade
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -20,4 +20,3 @@
     timezone: Europe/Zurich # optional
     units: metric # or imperial
     cache: 5 # Time in minutes to cache API responses, to stay within limits
-

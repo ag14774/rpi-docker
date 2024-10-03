@@ -13,10 +13,9 @@ import struct
 import subprocess
 import time
 import typing
-from cmath import pi
+from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, is_dataclass
 from ipaddress import (
-    IPV4LENGTH,
     AddressValueError,
     IPv4Address,
     IPv4Network,
@@ -24,12 +23,13 @@ from ipaddress import (
     IPv6Network,
 )
 from pathlib import Path
-from re import T
-from typing import Any, Callable, Dict, List, Optional, TextIO, Tuple, Type, TypeVar
+from typing import Any, Callable, Optional, TextIO, TypeVar
+
+import requests
 
 
 class ColoredFormatter(logging.Formatter):
-    MAPPING = {
+    MAPPING: Mapping[str, int] = {
         "DEBUG": 37,  # white
         "INFO": 36,  # cyan
         "WARNING": 33,  # yellow
@@ -46,9 +46,7 @@ class ColoredFormatter(logging.Formatter):
         colored_record = copy.copy(record)
         levelname = colored_record.levelname
         seq = self.MAPPING.get(levelname, 37)  # default white
-        colored_levelname = ("{0}{1}m{2}{3}").format(
-            self.PREFIX, seq, levelname, self.SUFFIX
-        )
+        colored_levelname = f"{self.PREFIX}{seq}m{levelname}{self.SUFFIX}"
         colored_record.levelname = colored_levelname
         return super().format(colored_record)
 
@@ -70,31 +68,27 @@ TJSONDataclass = TypeVar("TJSONDataclass", bound="JSONDataclass")
 
 class JSONDataclass:
     @classmethod
-    def from_json(cls: Type[TJSONDataclass], fp: TextIO) -> TJSONDataclass:
+    def from_json(cls: type[TJSONDataclass], fp: TextIO) -> TJSONDataclass:
         dct = json.load(fp)
         return cls.from_dict(dct)
 
     @classmethod
-    def from_json_s(cls: Type[TJSONDataclass], s: str) -> TJSONDataclass:
+    def from_json_s(cls: type[TJSONDataclass], s: str) -> TJSONDataclass:
         dct = json.loads(s)
         return cls.from_dict(dct)
 
     @classmethod
-    def from_dict(cls: Type[TJSONDataclass], dct: Dict[str, Any]) -> TJSONDataclass:
+    def from_dict(cls: type[TJSONDataclass], dct: dict[str, Any]) -> TJSONDataclass:
         assert is_dataclass(cls)
 
         field_types = {field.name: field.type for field in fields(cls)}
         for field_name, field_type in field_types.items():
             # TODO: fix for field types that are typing.List, Unions etc
-            if (
-                isinstance(field_type, type)
-                and issubclass(field_type, JSONDataclass)
-                and field_name in dct
-            ):
+            if isinstance(field_type, type) and issubclass(field_type, JSONDataclass) and field_name in dct:
                 assert is_dataclass(field_type)
-                dct[field_name] = field_type.from_dict(dct[field_name])
+                dct[field_name] = field_type.from_dict(dct[field_name])  # type: ignore[unknown]
 
-        return cls(**dct)  # type: ignore
+        return cls(**dct)
 
 
 @dataclass
@@ -124,7 +118,7 @@ class CloudflareConfig(JSONDataclass):
     api_key: str
     domain: str
     include_owncloud_subdomain: bool = True
-    subdomains: List[str] = field(default_factory=list)
+    subdomains: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         # Remove duplicates
@@ -147,7 +141,7 @@ class DuplicityConfig(JSONDataclass):
 @dataclass
 class PiHoleConfig(JSONDataclass):
     password: str
-    upstream_dns: List[str] = field(default_factory=lambda: ["8.8.8.8", "8.8.4.4"])
+    upstream_dns: list[str] = field(default_factory=lambda: ["8.8.8.8", "8.8.4.4"])
     use_gateway_as_dns: bool = True
 
     def __post_init__(self):
@@ -176,14 +170,10 @@ class JellyfinConfig(JSONDataclass):
             try:
                 stat_info = os.stat(video_dev)
                 gid = stat_info.st_gid
-                logger.info(
-                    f"Video GID is not set..automatically setting it to {gid}..."
-                )
+                logger.info(f"Video GID is not set..automatically setting it to {gid}...")
                 self.host_video_gid = gid
             except Exception as e:
-                raise RuntimeError(
-                    "Could not detect video GID...Use the host_video_gid argument..."
-                ) from e
+                raise RuntimeError("Could not detect video GID...Use the host_video_gid argument...") from e
 
 
 @dataclass
@@ -226,9 +216,7 @@ def hex_to_ip_address(hex_str: str) -> IPv4Address | IPv6Address:
     if len(hex_str) == 8:
         return IPv4Address(socket.inet_ntoa(struct.pack("<L", int(hex_str, 16))))
     else:
-        return IPv6Address(
-            socket.inet_ntop(socket.AF_INET6, int(hex_str, 16).to_bytes(16, "big"))
-        )
+        return IPv6Address(socket.inet_ntop(socket.AF_INET6, int(hex_str, 16).to_bytes(16, "big")))
 
 
 def hex_to_ipv4_address(hex_str: str) -> IPv4Address:
@@ -245,7 +233,7 @@ def hex_to_ipv6_address(hex_str: str) -> IPv6Address:
 
 def get_ipv4_gateway(
     iface: Optional[str] = None, gateway: Optional[IPv4Address | str] = None
-) -> Tuple[str, IPv4Address]:
+) -> tuple[str, IPv4Address]:
     """
     Read the default gateway directly from /proc/net/route. If either iface or gateway
     is provided, the other one will be autocompleted. If both are provided, the function
@@ -269,7 +257,7 @@ def get_ipv4_gateway(
     if gateway is not None:
         gateway = IPv4Address(gateway)
 
-    RTF_GATEWAY_MASK = 0x2
+    RTF_GATEWAY_MASK = 0x2  # noqa: N806
 
     entries = []
 
@@ -330,7 +318,7 @@ def get_ipv6_address(iface: str) -> IPv6Address:
 
 def get_ipv6_gateway(
     iface: Optional[str] = None, gateway: Optional[IPv6Address | str] = None
-) -> Tuple[str, IPv6Address]:
+) -> tuple[str, IPv6Address]:
     """
     Read the default gateway directly from /proc/net/ipv6_route. If either iface or gateway
     is provided, the other one will be autocompleted. If both are provided, the function
@@ -353,9 +341,9 @@ def get_ipv6_gateway(
     if gateway is not None:
         gateway = IPv6Address(gateway)
 
-    RTF_GATEWAY_MASK = 0x2
+    RTF_GATEWAY_MASK = 0x2  # noqa: N806
 
-    entries: List[REntry] = []
+    entries: list[REntry] = []
 
     route_file = Path("/proc/net/ipv6_route")
     if not route_file.exists():
@@ -364,10 +352,7 @@ def get_ipv6_gateway(
     with route_file.open("r") as fh:
         for line in fh:
             entry = REntry(*line.strip().split())
-            if (
-                entry.dest != "00000000000000000000000000000000"
-                or not int(entry.flags, 16) & RTF_GATEWAY_MASK
-            ):
+            if entry.dest != "00000000000000000000000000000000" or not int(entry.flags, 16) & RTF_GATEWAY_MASK:
                 # If not default route or not RTF_GATEWAY, skip it
                 continue
             try:
@@ -384,9 +369,7 @@ def get_ipv6_gateway(
             entries.append(entry)
 
     if not entries:
-        raise RuntimeError(
-            "Could not find any relevant entries in /proc/net/ipv6_route"
-        )
+        raise RuntimeError("Could not find any relevant entries in /proc/net/ipv6_route")
 
     entry = min(entries, key=lambda x: int(x.metric))
     return entry.iface, hex_to_ipv6_address(entry.next_hop)
@@ -394,21 +377,11 @@ def get_ipv6_gateway(
 
 def complete_network_config(nconfig: NetworkConfig) -> NetworkConfig:
     iface = nconfig.iface_name
-    ipv4_host = (
-        IPv4Address(nconfig.ipv4_host) if nconfig.ipv4_host is not None else None
-    )
-    ipv4_gateway = (
-        IPv4Address(nconfig.ipv4_gateway) if nconfig.ipv4_gateway is not None else None
-    )
-    ipv4_subnet = (
-        IPv4Network(nconfig.ipv4_subnet) if nconfig.ipv4_subnet is not None else None
-    )
-    ipv6_host = (
-        IPv6Address(nconfig.ipv6_host) if nconfig.ipv6_host is not None else None
-    )
-    ipv6_gateway = (
-        IPv6Address(nconfig.ipv6_gateway) if nconfig.ipv6_gateway is not None else None
-    )
+    ipv4_host = IPv4Address(nconfig.ipv4_host) if nconfig.ipv4_host is not None else None
+    ipv4_gateway = IPv4Address(nconfig.ipv4_gateway) if nconfig.ipv4_gateway is not None else None
+    ipv4_subnet = IPv4Network(nconfig.ipv4_subnet) if nconfig.ipv4_subnet is not None else None
+    ipv6_host = IPv6Address(nconfig.ipv6_host) if nconfig.ipv6_host is not None else None
+    ipv6_gateway = IPv6Address(nconfig.ipv6_gateway) if nconfig.ipv6_gateway is not None else None
 
     # Find iface and gateways
     if iface is None or ipv4_gateway is None:
@@ -424,8 +397,8 @@ def complete_network_config(nconfig: NetworkConfig) -> NetworkConfig:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ifname_packed = struct.pack("256s", bytes(iface, "utf-8"))
 
-    SIOCGIFADDR = 0x8915  # get IPv4 address
-    SIOCGIFNETMASK = 0x891B  # get subnet mask
+    SIOCGIFADDR = 0x8915  # get IPv4 address  # noqa: N806
+    SIOCGIFNETMASK = 0x891B  # get subnet mask  # noqa: N806
 
     if ipv4_host is None:
         out_struct = fcntl.ioctl(s.fileno(), SIOCGIFADDR, ifname_packed)
@@ -492,7 +465,7 @@ class Config(JSONDataclass):
         if self.pihole.use_gateway_as_dns:
             for gateway in [self.network.ipv6_gateway, self.network.ipv4_gateway]:
                 assert gateway is not None, "Something wrong happened"
-                self.pihole.upstream_dns = [gateway] + self.pihole.upstream_dns
+                self.pihole.upstream_dns = [gateway, *self.pihole.upstream_dns]
 
 
 @typing.no_type_check
@@ -523,22 +496,18 @@ def check_docker_ipv6() -> bool:
         logger.warning("No docker daemon.json file was found in %s.", docker_json_path)
         return False
 
-    docker_config: Dict[str, Any] = json.loads(docker_json_path.read_text())
+    docker_config: dict[str, Any] = json.loads(docker_json_path.read_text())
     if docker_config.get("ipv6") is not True:
         logger.warning("The flag `ipv6` is not set to true in docker daemon.json")
         return False
     if docker_config.get("experimental") is not True:
-        logger.warning(
-            "The flag `experimental` is not set to true in docker daemon.json"
-        )
+        logger.warning("The flag `experimental` is not set to true in docker daemon.json")
         return False
     if docker_config.get("ip6tables") is not True:
         logger.warning("The flag `ip6tables` is not set to true in docker daemon.json")
         return False
     if docker_config.get("fixed-cidr-v6") is None:
-        logger.warning(
-            "The setting `fixed-cidr-v6` could not be found or is set to null"
-        )
+        logger.warning("The setting `fixed-cidr-v6` could not be found or is set to null")
         return False
 
     try:
@@ -548,9 +517,7 @@ def check_docker_ipv6() -> bool:
         return False
 
     if not ipv6_address.subnet_of(IPv6Network("fd00::/8")):
-        logger.warning(
-            "Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses"
-        )
+        logger.warning("Docker IPv6 address is not a subnet of fd00::/8 which is the range for ULA addresses")
         return False
 
     return True
@@ -560,7 +527,7 @@ def get_docker_ipv6_network() -> IPv6Network:
     """Retrieves an IPv6Network object from the daemon.json file. This function assumes the file exists"""
     docker_json_path = get_docker_config_path()
 
-    docker_config: Dict[str, Any] = json.loads(docker_json_path.read_text())
+    docker_config: dict[str, Any] = json.loads(docker_json_path.read_text())
 
     return IPv6Network(docker_config["fixed-cidr-v6"], strict=True)
 
@@ -570,7 +537,7 @@ def correct_docker_config(ipv6_network: Optional[IPv6Network] = None):
     docker_json_path = get_docker_config_path()
 
     try:
-        docker_config: Dict[str, Any] = json.loads(docker_json_path.read_text())
+        docker_config: dict[str, Any] = json.loads(docker_json_path.read_text())
     except Exception:
         docker_json_path.parent.mkdir(exist_ok=True, parents=True)
         docker_config = {}
@@ -592,18 +559,12 @@ def get_rust_target() -> str:
         return target
 
     try:
-        process = subprocess.run(
-            ["rustup", "default"], check=True, text=True, capture_output=True
-        )
+        process = subprocess.run(["rustup", "default"], check=True, text=True, capture_output=True)
         target = process.stdout.strip().split(" ")[0].split("-", 1)[1]
         return target
-    except Exception as e:
+    except Exception:
         if os.getuid() == 0 and (username := os.environ.get("SUDO_USER")) is not None:
-            rustup_settings = (
-                (Path("/home") / username / ".rustup" / "settings.toml")
-                .read_text()
-                .split("\n")
-            )
+            rustup_settings = (Path("/home") / username / ".rustup" / "settings.toml").read_text().split("\n")
             for line in rustup_settings:
                 if line.startswith("default_toolchain"):
                     target = line.split("=")[1].strip('"').split("-", 1)[1]
@@ -624,7 +585,7 @@ def compile_rust_code(project_root: str | Path) -> None:
         "--rm",
         "-it",
         "-v",
-        f"{str(project_root)}:/home/rust/src",
+        f"{project_root!s}:/home/rust/src",
         "-v",
         "cargo-git:/root/.cargo/git",
         "-v",
@@ -642,9 +603,7 @@ def compile_rust_code(project_root: str | Path) -> None:
 
 
 def rclone_obscure(password: str):
-    p = subprocess.run(
-        ["rclone", "obscure", password], check=True, capture_output=True, text=True
-    )
+    p = subprocess.run(["rclone", "obscure", password], check=True, capture_output=True, text=True)
     return p.stdout.strip()
 
 
@@ -665,9 +624,7 @@ def generate_dotenv(config: Config):
     env["SMTP_AUTHENTICATION"] = str(config.owncloud.smtp_authentication)
     env["SMTP_INSECURE"] = str(config.owncloud.smtp_insecure)
 
-    assert (
-        len(config.cloudflare.subdomains) >= 1
-    ), "Currently at least one subdomain is required"
+    assert len(config.cloudflare.subdomains) >= 1, "Currently at least one subdomain is required"
     env["CLOUDFLARE_EMAIL"] = str(config.cloudflare.email)
     env["CLOUDFLARE_KEY"] = str(config.cloudflare.api_key)
     env["CLOUDFLARE_DOMAIN"] = str(config.cloudflare.domain)
@@ -744,35 +701,93 @@ def check_and_fix_acme_json():
         acme_file.chmod(0o600)
 
 
-def check_owncloud_user_exists(user: str) -> bool:
-    occ_output = json.loads(
-        subprocess.run(
-            ["docker-compose", "exec", "owncloud", "occ", "user:list", "--output=json"],
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout
+def get_interactive_authorization(owncloud_domain: str) -> str:
+    authorization_url = f"https://{owncloud_domain}/signin/v1/identifier/_/authorize?client_id=xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69&scope=openid+profile+email+offline_access&response_type=code&redirect_uri=http://localhost"
+    logger.info(
+        f"Use the following URL to retrieve an authorization code for the admin user:\n\n{authorization_url}\n\n"
     )
 
-    return user in occ_output
+    code = input("Enter the authorization code here: ")
+    return code
 
 
-def add_owncloud_user(user: str, password: str):
-    env = os.environ.copy()
-    env["OC_PASS"] = password
-    subprocess.run(
-        [
-            "docker-compose",
-            "exec",
-            "owncloud",
-            "occ",
-            "user:add",
-            "--password-from-env",
-            user,
-        ],
-        check=True,
-        env=env,
+def refresh_access_token(owncloud_domain: str, refresh_token: str) -> str:
+    url = f"https://{owncloud_domain}/konnect/v1/token"
+    r = requests.post(
+        url=url,
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "redirect_uri": "http://localhost",
+            "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
+            "client_secret": "UBntmLjC2yYCeHwsyj73Uwo9TAaecAetRwMw0xYcvNL9yRdLSUi0hUAHfvCHFeFh",
+        },
     )
+    r.raise_for_status()
+    result = r.json()
+    return str(result["access_token"])
+
+
+def get_access_and_refresh_token(owncloud_domain: str, auth_code: str) -> tuple[str, str]:
+    url = f"https://{owncloud_domain}/konnect/v1/token"
+    r = requests.post(
+        url=url,
+        data={
+            "grant_type": "refresh_token",
+            "code": auth_code,
+            "redirect_uri": "http://localhost",
+            "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
+            "client_secret": "UBntmLjC2yYCeHwsyj73Uwo9TAaecAetRwMw0xYcvNL9yRdLSUi0hUAHfvCHFeFh",
+        },
+    )
+    r.raise_for_status()
+    result = r.json()
+    return result["access_token"], result["refresh_token"]
+
+
+def get_access_token(owncloud_domain: str) -> str:
+    refresh_token_file = Path(__file__).parent / ".refresh_token"
+    retry = True
+    access_token = None
+    while retry:
+        if refresh_token_file.exists():
+            refresh_token = refresh_token_file.read_text()
+            try:
+                access_token = refresh_access_token(owncloud_domain, refresh_token)
+            except Exception as _:
+                logger.warn("Cannot refresh access token...falling back to interactive authorization...")
+                refresh_token_file.unlink(missing_ok=True)
+        else:
+            code = get_interactive_authorization(owncloud_domain)
+            access_token, refresh_token = get_access_and_refresh_token(owncloud_domain, code)
+            refresh_token_file.write_text(refresh_token)
+
+        if access_token is not None:
+            retry = False
+
+    assert access_token is not None
+    return access_token
+
+
+def check_owncloud_user_exists(user: str, owncloud_domain: str, access_key: str) -> bool:
+    url = f"https://{owncloud_domain}/graph/v1.0/users"
+    r = requests.get(url, headers={"Authorization": f"Bearer {access_key}"})
+    r.raise_for_status()
+
+    users = r.json()["value"]
+    return any(entry["accountEnabled"] is True and entry["onPremisesSamAccountName"] == user for entry in users)
+
+
+def add_owncloud_user(user: str, password: str, owncloud_domain: str, access_key: str):
+    url = f"https://{owncloud_domain}/graph/v1.0/users"
+    data = {
+        "displayName": "Movie User",
+        "mail": "",
+        "onPremisesSamAccountName": user,
+        "passwordProfile": {"password": password},
+    }
+    r = requests.post(url, json=data, headers={"Authorization": f"Bearer {access_key}"})
+    r.raise_for_status()
 
 
 def check_rclone_plugin() -> bool:
@@ -831,9 +846,7 @@ def main():
         action="store_true",
         help="Install the docker rclone plugin if not found (requires root)",
     )
-    parser.add_argument(
-        "-y", action="store_true", help="Do not prompt user for confirmation"
-    )
+    parser.add_argument("-y", action="store_true", help="Do not prompt user for confirmation")
     args = parser.parse_args()
 
     requires_root = False
@@ -843,14 +856,10 @@ def main():
 
     if requires_root:
         if os.getuid() != 0:
-            logger.error(
-                "You cannot perform this operation unless you are root. Please rerun with sudo"
-            )
+            logger.error("You cannot perform this operation unless you are root. Please rerun with sudo")
             return
         if os.getenv("SUDO_UID") is None:
-            logger.error(
-                "Could not find env variable SUDO_UID. Are you sure you are running with sudo?"
-            )
+            logger.error("Could not find env variable SUDO_UID. Are you sure you are running with sudo?")
             return
         os.seteuid(int(os.environ["SUDO_UID"]))
 
@@ -879,9 +888,7 @@ def main():
 
     if not args.y:
         print()
-        input(
-            "If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate"
-        )
+        input("If the detected settings are correct, press *any key* to continue...Otherwise press Ctrl+C to terminate")
 
     logger.info("Checking docker config daemon.json...")
     if not check_docker_ipv6():
@@ -925,11 +932,15 @@ def main():
     time.sleep(5)
 
     logger.info("Checking if WebDAV jellyfin user exists in OwnCloud...")
-    if not check_owncloud_user_exists(config.jellyfin.webdav_user):
-        logger.warning(
-            "No OwnCloud user %s was found...creating...", config.jellyfin.webdav_user
+    assert config.owncloud.domain is not None
+    access_token = get_access_token(config.owncloud.domain)
+    if not check_owncloud_user_exists(
+        config.jellyfin.webdav_user, owncloud_domain=config.owncloud.domain, access_key=access_token
+    ):
+        logger.warning("No OwnCloud user %s was found...creating...", config.jellyfin.webdav_user)
+        add_owncloud_user(
+            config.jellyfin.webdav_user, config.jellyfin.webdav_pass, config.owncloud.domain, access_token
         )
-        add_owncloud_user(config.jellyfin.webdav_user, config.jellyfin.webdav_pass)
 
     logger.info("Starting docker containers...(Stage 2)")
     subprocess.run(["docker-compose", "up", "-d"], check=True)

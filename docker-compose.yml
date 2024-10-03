@@ -106,7 +106,7 @@ services:
       - ./traefik/acme.json:/acme.json
     labels:
       - "traefik.enable=false"
-  
+
   ocis:
     image: ${OCIS_DOCKER_IMAGE:-owncloud/ocis}:${OCIS_DOCKER_TAG:-latest}
     container_name: ocis
@@ -122,7 +122,7 @@ services:
       # enable the notifications service as it is not started automatically
       OCIS_ADD_RUN_SERVICES: "notifications"
       OCIS_URL: https://${OCIS_DOMAIN:-ocis.owncloud.test}
-      OCIS_LOG_LEVEL: info
+      OCIS_LOG_LEVEL: warn
       OCIS_LOG_COLOR: "true"
       OCIS_LOG_PRETTY: "true"
       # do not use SSL between Traefik and oCIS
@@ -315,4 +315,3 @@ services:
       # Homepage port is 3000
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
       - "traefik.enable=true"
-

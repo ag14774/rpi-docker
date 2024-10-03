@@ -26,4 +26,3 @@
         description: A quick glance at the system's health and performance
         server: my-docker
         container: glances
-

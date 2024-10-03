@@ -4,7 +4,7 @@ dashboard = false
 
 [providers.docker]
 exposedByDefault = false
-endpoint = "tcp://socket-proxy:2375" 
+endpoint = "tcp://socket-proxy:2375"
 
 [entryPoints]
   [entryPoints.web]
