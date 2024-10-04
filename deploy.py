@@ -160,6 +160,7 @@ class JellyfinConfig(JSONDataclass):
     webdav_url: str
     webdav_user: str
     webdav_pass: str
+    webdav_bearer_token_command: str
     host_video_gid: Optional[int] = None
 
     def __post_init__(self):
@@ -602,11 +603,6 @@ def compile_rust_code(project_root: str | Path) -> None:
     subprocess.run(cmd, check=True)
 
 
-def rclone_obscure(password: str):
-    p = subprocess.run(["rclone", "obscure", password], check=True, capture_output=True, text=True)
-    return p.stdout.strip()
-
-
 def generate_dotenv(config: Config):
     env = {}
     env["DATA_PATH"] = str(config.paths.data_dir)
@@ -646,7 +642,7 @@ def generate_dotenv(config: Config):
 
     env["WEBDAV_URL"] = str(config.jellyfin.webdav_url)
     env["WEBDAV_USER"] = str(config.jellyfin.webdav_user)
-    env["WEBDAV_PASS"] = rclone_obscure(str(config.jellyfin.webdav_pass))
+    env["WEBDAV_BEARER_TOKEN_COMMAND"] = str(config.jellyfin.webdav_bearer_token_command)
     env["HOST_VIDEO_GID"] = str(config.jellyfin.host_video_gid)
 
     cmd = ["./general/dotenv_writer/build/bin/dotenv_writer"]

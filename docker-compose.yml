@@ -32,7 +32,7 @@ volumes:
       webdav-url: ${WEBDAV_URL}
       webdav-vendor: owncloud
       webdav-user: ${WEBDAV_USER}
-      webdav-pass: ${WEBDAV_PASS}
+      webdav-bearer-token-command: ${WEBDAV_BEARER_TOKEN_COMMAND}
       vfs_cache_mode: writes
       allow_other: 'true'
 

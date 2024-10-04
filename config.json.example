@@ -46,7 +46,8 @@
     "webdav_url": "<webdav url here>",
     "host_video_gid": "<GID of the video group on the host RPi>",
     "webdav_user": "user",
-    "webdav_pass": "pass"
+    "webdav_pass": "pass",
+    "webdav_bearer_token_command": "oidc-token-command"
   },
   "network": {
     "iface_name": null,
