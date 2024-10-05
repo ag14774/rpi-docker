@@ -829,10 +829,12 @@ def install_rclone_plugin():
     oidc_agent_data = json.loads(proc.stdout)
     oidc_socket = oidc_agent_data["socket"]
     oidc_socket_symlink = Path("/var/lib/docker-plugins/rclone_oidc/oidc_socket")
+    oidc_socket_symlink.unlink(missing_ok=True)
     oidc_socket_symlink.symlink_to(oidc_socket)
 
     oidc_agent_config = Path.home() / ".config" / "oidc-agent"
     oidc_agent_config_symlink = Path("/var/lib/docker-plugins/rclone_oidc/oidc_config")
+    oidc_agent_config_symlink.unlink(missing_ok=True)
     oidc_agent_config_symlink.symlink_to(oidc_agent_config, target_is_directory=True)
 
     install_script = Path(__file__).parent / "rclone_plugin" / "install_plugin.sh"
