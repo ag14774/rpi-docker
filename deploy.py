@@ -5,9 +5,11 @@ import argparse
 import copy
 import fcntl
 import functools
+import grp
 import json
 import logging
 import os
+import pwd
 import socket
 import struct
 import subprocess
@@ -474,8 +476,18 @@ def run_as_root(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         current_euid = os.geteuid()
+        current_egid = os.getegid()
+        current_groups = os.getgroups()
+
+        root_info = pwd.getpwuid(0)
+        root_groups = [g.gr_gid for g in grp.getgrall() if root_info.pw_name in g.gr_mem]
         os.seteuid(0)
+        os.setegid(0)
+        os.setgroups(root_groups)
+
         retval = func(*args, **kwargs)
+        os.setgroups(current_groups)
+        os.setegid(current_egid)
         os.seteuid(current_euid)
         return retval
 
@@ -856,6 +868,10 @@ def main():
         if os.getenv("SUDO_UID") is None:
             logger.error("Could not find env variable SUDO_UID. Are you sure you are running with sudo?")
             return
+        user_info = pwd.getpwuid(int(os.environ["SUDO_UID"]))
+        user_groups = [g.gr_gid for g in grp.getgrall() if user_info.pw_name in g.gr_mem]
+        os.setgroups(user_groups)
+        os.setegid(int(os.environ["SUDO_GID"]))
         os.seteuid(int(os.environ["SUDO_UID"]))
 
     if (arch := os.uname().machine) != "aarch64":
