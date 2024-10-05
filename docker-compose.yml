@@ -26,7 +26,7 @@ volumes:
       device: ${LOCAL_BACKUP_PATH}
       o: bind
   owncloud_webdav:
-    driver: rclone
+    driver: rclone_oidc
     driver_opts:
       type: webdav
       webdav-url: ${WEBDAV_URL}

@@ -652,7 +652,7 @@ def generate_dotenv(config: Config):
     env["LOCAL_IPV4"] = str(config.network.ipv4_host)
     env["LOCAL_IPV6"] = str(config.network.ipv6_host)
 
-    env["WEBDAV_URL"] = str(config.jellyfin.webdav_url)
+    env["WEBDAV_URL"] = f"'{config.jellyfin.webdav_url!s}'"
     env["WEBDAV_USER"] = str(config.jellyfin.webdav_user)
     env["WEBDAV_BEARER_TOKEN_COMMAND"] = str(config.jellyfin.webdav_bearer_token_command)
     env["HOST_VIDEO_GID"] = str(config.jellyfin.host_video_gid)

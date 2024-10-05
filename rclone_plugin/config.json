@@ -65,7 +65,7 @@
         },
         {
             "name": "OIDC_SOCK",
-            "value": "/oidc_sock"
+            "value": "/oidc_socket"
         }
     ],
     "mounts": [

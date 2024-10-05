@@ -43,7 +43,7 @@ COPY --from=builder /lib/x86_64-linux-gnu/liboidc-agent.so.5 /lib/x86_64-linux-g
 COPY --from=builder /oidc-agent/bin/oidc-token /bin/oidc-token
 COPY --from=builder /oidc-agent/bin/oidc-add /bin/oidc-add
 ENV OIDC_ENCRYPTION_PW=
-ENV OIDC_SOCK=/oidc_sock
+ENV OIDC_SOCK=/oidc_socket
 
 # put rclone in /usr/bin, reserve /usr/local/bin for plugin wrappers
 COPY --from=rclone_binaries /usr/local/bin/rclone /usr/bin/rclone
