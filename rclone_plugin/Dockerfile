@@ -39,7 +39,7 @@ RUN apt-get install -y \
     libcjson-dev \
     jq
 
-COPY --from=builder /lib/x86_64-linux-gnu/liboidc-agent.so.5 /lib/x86_64-linux-gnu/liboidc-agent.so.5
+COPY --from=builder /lib/aarch64-linux-gnu/liboidc-agent.so.5 /lib/aarch64-linux-gnu/liboidc-agent.so.5
 COPY --from=builder /oidc-agent/bin/oidc-token /bin/oidc-token
 COPY --from=builder /oidc-agent/bin/oidc-add /bin/oidc-add
 ENV OIDC_ENCRYPTION_PW=
