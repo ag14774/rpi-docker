@@ -808,19 +808,19 @@ def check_rclone_plugin() -> bool:
 
 @run_as_root
 def install_rclone_plugin():
-    config_path = Path("/var/lib/docker-plugins/rclone/config")
+    config_path = Path("/var/lib/docker-plugins/rclone_oidc/config")
     config_path.mkdir(exist_ok=True, parents=True)
-    cache_path = Path("/var/lib/docker-plugins/rclone/cache")
+    cache_path = Path("/var/lib/docker-plugins/rclone_oidc/cache")
     cache_path.mkdir(exist_ok=True, parents=True)
 
     proc = subprocess.run(["oidc-agent", "--json"], text=True, check=True, capture_output=True)
     oidc_agent_data = json.loads(proc.stdout)
     oidc_socket = oidc_agent_data["socket"]
-    oidc_socket_symlink = Path("/var/lib/docker-plugins/rclone/oidc_socket")
+    oidc_socket_symlink = Path("/var/lib/docker-plugins/rclone_oidc/oidc_socket")
     oidc_socket_symlink.symlink_to(oidc_socket)
 
     oidc_agent_config = Path.home() / ".config" / "oidc-agent"
-    oidc_agent_config_symlink = Path("/var/lib/docker-plugins/rclone/oidc_config")
+    oidc_agent_config_symlink = Path("/var/lib/docker-plugins/rclone_oidc/oidc_config")
     oidc_agent_config_symlink.symlink_to(oidc_agent_config, target_is_directory=True)
 
     install_script = Path(__file__).parent / "rclone_plugin" / "install_plugin.sh"
