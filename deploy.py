@@ -837,7 +837,7 @@ def install_rclone_plugin():
 
     install_script = Path(__file__).parent / "rclone_plugin" / "install_plugin.sh"
 
-    subprocess.check_call([str(install_script)])
+    subprocess.check_call([f"./{install_script.name}"], cwd=install_script.parent)
     subprocess.run(["docker", "plugin", "enable", "rclone_oidc"], check=True)
 
 
