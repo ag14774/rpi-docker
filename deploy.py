@@ -810,7 +810,7 @@ def check_rclone_plugin() -> bool:
         check=True,
         text=True,
         capture_output=True,
-    ).stdout
+    ).stdout.strip()
     for line in plugin_out.split("\n"):
         plugin, enabled = line.split(",")
         if plugin.startswith("rclone") and enabled == "true":
