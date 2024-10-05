@@ -20,6 +20,7 @@ RUN git clone https://github.com/indigo-dc/oidc-agent --branch v5.2.2
 WORKDIR /oidc-agent
 
 RUN make
+RUN cp /oidc-agent/lib/api/liboidc-agent.so* /lib/aarch64-linux-gnu/
 RUN make install_bin
 RUN make install_lib
 RUN make install_lib-dev
