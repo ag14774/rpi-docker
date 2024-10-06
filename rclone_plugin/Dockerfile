@@ -43,6 +43,8 @@ RUN apt-get install -y \
 COPY --from=builder /lib/aarch64-linux-gnu/liboidc-agent.so.5 /lib/aarch64-linux-gnu/liboidc-agent.so.5
 COPY --from=builder /oidc-agent/bin/oidc-token /bin/oidc-token
 COPY --from=builder /oidc-agent/bin/oidc-add /bin/oidc-add
+COPY gen_token.sh /bin/gen_token
+RUN chmod +x /bin/gen_token
 ENV OIDC_ENCRYPTION_PW=
 ENV OIDC_SOCK=/oidc_socket
 
