@@ -4,7 +4,7 @@
         href: https://owncloud.ageorgiou.com/
         description: Private and secure storage for your files
         server: my-docker
-        container: owncloud_server
+        container: ocis
 
     - Jellyfin:
         icon: jellyfin
