@@ -306,7 +306,7 @@ services:
       - "traefik.enable=true"
 
   homepage:
-    image: ghcr.io/benphelps/homepage:latest
+    image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     networks:
       - ipv4_net
