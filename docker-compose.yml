@@ -62,7 +62,9 @@ services:
   # to the '/containers/*' part of the docker.sock API. This restricted version of docker.sock
   # can be accessed via tcp://socket-proxy:2375
   socket-proxy:
-    image: tecnativa/docker-socket-proxy
+    build:
+      context: ./socket_proxy
+      dockerfile: Dockerfile
     container_name: socket-proxy
     restart: always
     volumes:
