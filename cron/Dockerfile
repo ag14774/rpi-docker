@@ -39,6 +39,7 @@ ADD cron/backups /backups
 RUN chmod +x /backups/* || true
 
 RUN touch /var/log/cron.log
+RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /backups/backup_ocis.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 RUN (crontab -l 2>/dev/null; echo "0 0 * * 0 /backups/backup_jellyfin.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 RUN (crontab -l 2>/dev/null; echo "10 0 * * 0 /duplicity/run_dup_once.sh > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -
 RUN (crontab -l 2>/dev/null; echo "*/30 * * * * RUST_LOG=info cf_dyndns --dotenv-dir / > /proc/1/fd/1 2>/proc/1/fd/2") | crontab -

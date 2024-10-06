@@ -72,6 +72,8 @@ services:
     environment:
       CONTAINERS: 1
       IMAGES: 1
+      ALLOW_POST_PAUSE: 1
+      ALLOW_POST_UNPAUSE: 1
     networks:
       - proxy_net
     labels:
@@ -189,11 +191,14 @@ services:
     container_name: cron_container
     networks:
       - ipv4_net
+      - proxy_net
     restart: always
     labels:
       - "traefik.enable=false"
     volumes:
       - jellyfin_config:/mnt/jellyfin_config:ro
+      - owncloud_files:/mnt/ocis_files:ro
+      - owncloud_config:/mnt/ocis_config:ro
       - backup:/mnt/backup
 
   pihole:
