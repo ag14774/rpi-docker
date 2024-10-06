@@ -10,6 +10,8 @@ ARG cloudflare_key
 ARG cloudflare_domain
 ARG cloudflare_subdomains
 
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 RUN apk update && apk upgrade && apk add duplicity py3-pip jq curl openssh rsync
 RUN pip3 install boto3
 
