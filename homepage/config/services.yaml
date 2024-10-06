@@ -1,7 +1,7 @@
 - Apps:
     - Owncloud:
         icon: owncloud
-        href: http://owncloud.home/
+        href: https://owncloud.ageorgiou.com/
         description: Private and secure storage for your files
         server: my-docker
         container: owncloud_server
