@@ -32,7 +32,7 @@ RUN chmod +x /duplicity/run_dup_once.sh
 COPY cron/cloudflare-dns/build/bin/cf_dyndns /bin/cf_dyndns
 RUN chmod +x /bin/cf_dyndns
 
-ADD cron/run_hourly/ /etc/periodic/hourly/
+# ADD cron/run_hourly/ /etc/periodic/hourly/
 RUN chmod +x /etc/periodic/hourly/* || true
 
 ADD cron/backups /backups
